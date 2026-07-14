@@ -37,7 +37,7 @@
 
 ## Task 6: Acceptance audit
 
-- [ ] Exercise the complete flow and check every item in `docs/acceptance.md`.
+- [x] Exercise the complete flow and check every item in `docs/acceptance.md`.
 - Acceptance: all criteria have current evidence; no remote/fork relationship exists.
 - Verify: full test suite, runtime fixture, doctor, Git inspection.
 - Dependencies: all prior tasks.
