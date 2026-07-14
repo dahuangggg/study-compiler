@@ -21,7 +21,9 @@ def _manifest_path(vault: Path) -> Path:
 
 def _load_manifest(vault: Path) -> dict[str, Any]:
     manifest = read_json(_manifest_path(vault))
-    if manifest.get("schema_version") != 1 or not isinstance(manifest.get("sources"), dict):
+    if manifest.get("schema_version") != 1 or not isinstance(
+        manifest.get("sources"), dict
+    ):
         raise StateError("manifest.json has an unsupported schema")
     return manifest
 
@@ -56,7 +58,9 @@ def _relative(path: Path, vault: Path) -> str:
     return path.relative_to(vault).as_posix()
 
 
-def _record_source(vault: Path, manifest: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
+def _record_source(
+    vault: Path, manifest: dict[str, Any], record: dict[str, Any]
+) -> dict[str, Any]:
     source_id = record["id"]
     source_dir = safe_child(vault, "sources", source_id)
     source_dir.mkdir(parents=True, exist_ok=False)
@@ -64,7 +68,9 @@ def _record_source(vault: Path, manifest: dict[str, Any], record: dict[str, Any]
     manifest["sources"][source_id] = record
     write_json(_manifest_path(vault), manifest)
     with (vault / "log.md").open("a", encoding="utf-8") as log:
-        log.write(f"- {record['imported_at']} SOURCE_ADD id={source_id} kind={record['kind']}\n")
+        log.write(
+            f"- {record['imported_at']} SOURCE_ADD id={source_id} kind={record['kind']}\n"
+        )
     return {"duplicate": False, "source": record}
 
 
@@ -151,7 +157,9 @@ def _normalize_https_url(raw_url: str) -> str:
     return urlunsplit(("https", rendered_host, path, parsed.query, ""))
 
 
-def add_url_source(vault: Path, url: str, *, title: str | None = None) -> dict[str, Any]:
+def add_url_source(
+    vault: Path, url: str, *, title: str | None = None
+) -> dict[str, Any]:
     root = require_vault(vault)
     normalized = _normalize_https_url(url)
     digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
@@ -200,7 +208,11 @@ def attach_web_snapshot(
         raise ValidationError(f"source exceeds {max_bytes} byte limit")
     with path.open("rb") as handle:
         digest = _hash_stream(handle)
-    suffix = path.suffix.lower() if path.suffix.lower() in {".html", ".md", ".txt"} else ".txt"
+    suffix = (
+        path.suffix.lower()
+        if path.suffix.lower() in {".html", ".md", ".txt"}
+        else ".txt"
+    )
     destination = safe_child(root, "sources", source_id, f"snapshot{suffix}")
     shutil.copyfile(path, destination)
     destination.chmod(0o444)
@@ -272,4 +284,6 @@ def add_snippet(
 def list_sources(vault: Path) -> list[dict[str, Any]]:
     root = require_vault(vault)
     manifest = _load_manifest(root)
-    return sorted(manifest["sources"].values(), key=lambda item: (item["imported_at"], item["id"]))
+    return sorted(
+        manifest["sources"].values(), key=lambda item: (item["imported_at"], item["id"])
+    )

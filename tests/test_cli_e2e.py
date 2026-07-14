@@ -17,7 +17,9 @@ class CommandLineEndToEndTests(unittest.TestCase):
             lesson_body = root / "lesson.md"
             lesson_body.write_text(VALID_BODY, encoding="utf-8")
             retelling = root / "retelling.md"
-            retelling.write_text("Each token gathers useful context from other tokens.", encoding="utf-8")
+            retelling.write_text(
+                "Each token gathers useful context from other tokens.", encoding="utf-8"
+            )
 
             initialized = self.run_cli("init", str(vault))
             self.assertEqual(initialized.returncode, 0, initialized.stderr)
@@ -67,7 +69,9 @@ class CommandLineEndToEndTests(unittest.TestCase):
             self.assertEqual(unapproved.returncode, 2)
             self.assertIn("--approve", unapproved.stderr)
 
-            promoted = self.run_cli("draft", "promote", str(vault), "attention", "--approve")
+            promoted = self.run_cli(
+                "draft", "promote", str(vault), "attention", "--approve"
+            )
             self.assertEqual(promoted.returncode, 0, promoted.stderr)
 
             digest = self.run_cli("digest", "build", str(vault), "--period", "weekly")
@@ -95,4 +99,3 @@ class CommandLineEndToEndTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

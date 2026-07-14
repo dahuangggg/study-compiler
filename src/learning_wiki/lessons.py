@@ -22,7 +22,9 @@ MAX_RETELLING_CHARS = 100_000
 
 def require_slug(value: str) -> str:
     if not SLUG_PATTERN.fullmatch(value):
-        raise ValidationError("slug must contain lowercase letters, numbers, or hyphens")
+        raise ValidationError(
+            "slug must contain lowercase letters, numbers, or hyphens"
+        )
     return value
 
 
@@ -35,7 +37,9 @@ def _require_nonempty_sections(body: str) -> None:
         positions.append((match.start(), match.end(), heading))
     positions.sort()
     for index, (_, end, heading) in enumerate(positions):
-        next_start = positions[index + 1][0] if index + 1 < len(positions) else len(body)
+        next_start = (
+            positions[index + 1][0] if index + 1 < len(positions) else len(body)
+        )
         if not body[end:next_start].strip():
             raise ValidationError(f"lesson section must not be empty: {heading}")
 
@@ -67,7 +71,9 @@ def parse_lesson(content: str) -> tuple[dict[str, Any], str]:
     required = {"title", "slug", "source_ids", "created", "updated", "status"}
     missing = required - metadata.keys()
     if missing:
-        raise ValidationError(f"lesson frontmatter missing: {', '.join(sorted(missing))}")
+        raise ValidationError(
+            f"lesson frontmatter missing: {', '.join(sorted(missing))}"
+        )
     require_slug(metadata["slug"])
     if not isinstance(metadata["source_ids"], list) or not metadata["source_ids"]:
         raise ValidationError("lesson must cite at least one source ID")
@@ -107,7 +113,11 @@ def create_draft(
     if not unique_source_ids:
         raise ValidationError("lesson must cite at least one source ID")
     manifest = _manifest(root)
-    unknown = [source_id for source_id in unique_source_ids if source_id not in manifest["sources"]]
+    unknown = [
+        source_id
+        for source_id in unique_source_ids
+        if source_id not in manifest["sources"]
+    ]
     if unknown:
         raise ValidationError(f"unknown source ID: {unknown[0]}")
 
@@ -143,7 +153,11 @@ def create_draft(
     write_json(root / ".learning-wiki/manifest.json", manifest)
     with (root / "log.md").open("a", encoding="utf-8") as log:
         log.write(f"- {timestamp} DRAFT_CREATE slug={slug}\n")
-    return {"path": staged.relative_to(root).as_posix(), "slug": slug, "status": "draft"}
+    return {
+        "path": staged.relative_to(root).as_posix(),
+        "slug": slug,
+        "status": "draft",
+    }
 
 
 def list_drafts(vault: Path) -> list[dict[str, Any]]:
@@ -168,13 +182,19 @@ def revise_draft(vault: Path, slug: str, *, body: str) -> dict[str, Any]:
     staged.write_text(_render_lesson(metadata, body), encoding="utf-8")
     with (root / "log.md").open("a", encoding="utf-8") as log:
         log.write(f"- {timestamp} DRAFT_REVISE slug={slug}\n")
-    return {"path": staged.relative_to(root).as_posix(), "slug": slug, "status": "draft"}
+    return {
+        "path": staged.relative_to(root).as_posix(),
+        "slug": slug,
+        "status": "draft",
+    }
 
 
 def _iso_timestamp(value: datetime) -> str:
     if value.tzinfo is None:
         raise ValidationError("review timestamp must include a timezone")
-    return value.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        value.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    )
 
 
 def record_recall(
@@ -279,4 +299,8 @@ def promote_draft(vault: Path, slug: str, *, approve: bool) -> dict[str, Any]:
     _rebuild_index(root)
     with (root / "log.md").open("a", encoding="utf-8") as log:
         log.write(f"- {timestamp} DRAFT_PROMOTE slug={slug}\n")
-    return {"path": destination.relative_to(root).as_posix(), "slug": slug, "status": "approved"}
+    return {
+        "path": destination.relative_to(root).as_posix(),
+        "slug": slug,
+        "status": "approved",
+    }

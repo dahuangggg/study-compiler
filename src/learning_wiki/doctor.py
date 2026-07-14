@@ -81,7 +81,9 @@ def _check_lesson(
         errors.append(f"invalid lesson {path.name}: {error}")
         return
     if metadata.get("status") != expected_status:
-        errors.append(f"lesson {path.name} has status {metadata.get('status')}, expected {expected_status}")
+        errors.append(
+            f"lesson {path.name} has status {metadata.get('status')}, expected {expected_status}"
+        )
     for source_id in metadata["source_ids"]:
         if source_id not in source_ids:
             errors.append(f"lesson {path.name} cites unknown source ID: {source_id}")
@@ -96,18 +98,24 @@ def inspect_vault(vault: Path) -> dict[str, Any]:
 
     sources: dict[str, Any] = {}
     if manifest is not None:
-        if manifest.get("schema_version") != 1 or not isinstance(manifest.get("sources"), dict):
+        if manifest.get("schema_version") != 1 or not isinstance(
+            manifest.get("sources"), dict
+        ):
             errors.append("manifest.json has an unsupported schema")
         else:
             sources = manifest["sources"]
             for source_id, source in sources.items():
                 _check_source(root, source_id, source, errors, warnings)
-            known_dirs = {path.name for path in (root / "sources").iterdir() if path.is_dir()}
+            known_dirs = {
+                path.name for path in (root / "sources").iterdir() if path.is_dir()
+            }
             for orphan in sorted(known_dirs - sources.keys()):
                 errors.append(f"orphan source directory: {orphan}")
 
     if learning_state is not None:
-        if learning_state.get("schema_version") != 1 or not isinstance(learning_state.get("lessons"), dict):
+        if learning_state.get("schema_version") != 1 or not isinstance(
+            learning_state.get("lessons"), dict
+        ):
             errors.append("learning-state.json has an unsupported schema")
 
     staged_paths = sorted((root / "_staging/lessons").glob("*.md"))
@@ -127,13 +135,19 @@ def inspect_vault(vault: Path) -> dict[str, Any]:
         errors.append(f"cannot validate index.md: {error}")
 
     for review_path in sorted((root / "reviews").glob("*.jsonl")):
-        for line_number, line in enumerate(review_path.read_text(encoding="utf-8").splitlines(), start=1):
+        for line_number, line in enumerate(
+            review_path.read_text(encoding="utf-8").splitlines(), start=1
+        ):
             try:
                 record = json.loads(line)
-                if not isinstance(record, dict) or record.get("score") not in range(1, 6):
+                if not isinstance(record, dict) or record.get("score") not in range(
+                    1, 6
+                ):
                     raise ValueError("invalid score")
             except (json.JSONDecodeError, TypeError, ValueError) as error:
-                errors.append(f"invalid review {review_path.name}:{line_number}: {error}")
+                errors.append(
+                    f"invalid review {review_path.name}:{line_number}: {error}"
+                )
 
     return {
         "ok": not errors,
@@ -146,4 +160,3 @@ def inspect_vault(vault: Path) -> dict[str, Any]:
             "reviews": len(list((root / "reviews").glob("*.jsonl"))),
         },
     }
-

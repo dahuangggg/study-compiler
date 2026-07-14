@@ -26,11 +26,15 @@ class SourceRegistryTests(unittest.TestCase):
             paper.write_bytes(content)
             initialize_vault(vault)
 
-            result = add_local_source(vault, paper, kind="paper", title="A useful paper")
+            result = add_local_source(
+                vault, paper, kind="paper", title="A useful paper"
+            )
 
             snapshot = vault / result["source"]["snapshot"]
             self.assertEqual(snapshot.read_bytes(), content)
-            self.assertEqual(result["source"]["sha256"], hashlib.sha256(content).hexdigest())
+            self.assertEqual(
+                result["source"]["sha256"], hashlib.sha256(content).hexdigest()
+            )
             self.assertEqual(result["source"]["kind"], "paper")
             self.assertFalse(result["duplicate"])
             self.assertEqual(stat.S_IMODE(snapshot.stat().st_mode), 0o444)
@@ -75,7 +79,9 @@ class SourceRegistryTests(unittest.TestCase):
             root = Path(temp_dir)
             vault = root / "Learn"
             snapshot_input = root / "article.md"
-            snapshot_input.write_text("# Article\n\nA grounded explanation.", encoding="utf-8")
+            snapshot_input.write_text(
+                "# Article\n\nA grounded explanation.", encoding="utf-8"
+            )
             initialize_vault(vault)
             source = add_url_source(vault, "https://example.com/article")["source"]
 
@@ -86,7 +92,10 @@ class SourceRegistryTests(unittest.TestCase):
             self.assertEqual(snapshot.read_text(), snapshot_input.read_text())
             self.assertEqual(attached["status"], "new")
             self.assertEqual(attached["reference_sha256"], source["sha256"])
-            self.assertEqual(attached["sha256"], hashlib.sha256(snapshot_input.read_bytes()).hexdigest())
+            self.assertEqual(
+                attached["sha256"],
+                hashlib.sha256(snapshot_input.read_bytes()).hexdigest(),
+            )
             self.assertEqual(stat.S_IMODE(snapshot.stat().st_mode), 0o444)
 
     def test_rejects_unsafe_web_targets(self) -> None:
@@ -121,7 +130,9 @@ class SourceRegistryTests(unittest.TestCase):
 
             source = result["source"]
             snapshot = vault / source["snapshot"]
-            self.assertIn("attention mixes context", snapshot.read_text(encoding="utf-8"))
+            self.assertIn(
+                "attention mixes context", snapshot.read_text(encoding="utf-8")
+            )
             metadata = json.loads((snapshot.parent / "metadata.json").read_text())
             self.assertEqual(metadata["id"], source["id"])
 

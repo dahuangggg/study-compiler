@@ -5,7 +5,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from learning_wiki.errors import StateError, ValidationError
-from learning_wiki.lessons import create_draft, list_drafts, promote_draft, record_recall, revise_draft
+from learning_wiki.lessons import (
+    create_draft,
+    list_drafts,
+    promote_draft,
+    record_recall,
+    revise_draft,
+)
 from learning_wiki.sources import add_snippet
 from learning_wiki.storage import initialize_vault
 
@@ -61,7 +67,9 @@ class LessonLifecycleTests(unittest.TestCase):
         content = staged.read_text(encoding="utf-8")
         self.assertIn('status: "draft"', content)
         self.assertIn(self.source["id"], content)
-        self.assertEqual([item["slug"] for item in list_drafts(self.vault)], ["attention-intuition"])
+        self.assertEqual(
+            [item["slug"] for item in list_drafts(self.vault)], ["attention-intuition"]
+        )
 
     def test_rejects_missing_teaching_section_or_unknown_source(self) -> None:
         with self.assertRaisesRegex(ValidationError, "Example"):
@@ -112,10 +120,14 @@ class LessonLifecycleTests(unittest.TestCase):
 
         self.assertTrue(result["can_explain"])
         self.assertEqual(result["next_review"], "2026-07-21T12:00:00Z")
-        review_lines = (self.vault / "reviews/attention-intuition.jsonl").read_text().splitlines()
+        review_lines = (
+            (self.vault / "reviews/attention-intuition.jsonl").read_text().splitlines()
+        )
         self.assertEqual(len(review_lines), 1)
         self.assertEqual(json.loads(review_lines[0])["score"], 4)
-        state = json.loads((self.vault / ".learning-wiki/learning-state.json").read_text())
+        state = json.loads(
+            (self.vault / ".learning-wiki/learning-state.json").read_text()
+        )
         self.assertEqual(state["lessons"]["attention-intuition"]["mastery_score"], 4)
         manifest = json.loads((self.vault / ".learning-wiki/manifest.json").read_text())
         self.assertNotIn("mastery_score", manifest["sources"][self.source["id"]])
@@ -156,9 +168,14 @@ class LessonLifecycleTests(unittest.TestCase):
 
         approved = self.vault / result["path"]
         self.assertTrue(approved.exists())
-        self.assertFalse((self.vault / "_staging/lessons/attention-intuition.md").exists())
+        self.assertFalse(
+            (self.vault / "_staging/lessons/attention-intuition.md").exists()
+        )
         self.assertIn('status: "approved"', approved.read_text())
-        self.assertIn("[[lessons/attention-intuition|Understanding Attention]]", (self.vault / "index.md").read_text())
+        self.assertIn(
+            "[[lessons/attention-intuition|Understanding Attention]]",
+            (self.vault / "index.md").read_text(),
+        )
         manifest = json.loads((self.vault / ".learning-wiki/manifest.json").read_text())
         self.assertEqual(manifest["sources"][self.source["id"]]["status"], "integrated")
 
@@ -178,7 +195,9 @@ class LessonLifecycleTests(unittest.TestCase):
         with self.assertRaisesRegex(StateError, "unknown source"):
             promote_draft(self.vault, "attention-intuition", approve=True)
 
-        self.assertTrue((self.vault / "_staging/lessons/attention-intuition.md").exists())
+        self.assertTrue(
+            (self.vault / "_staging/lessons/attention-intuition.md").exists()
+        )
         self.assertFalse((self.vault / "lessons/attention-intuition.md").exists())
 
 

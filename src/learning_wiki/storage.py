@@ -91,11 +91,12 @@ def initialize_vault(vault: Path) -> dict[str, Any]:
 
     index = root / "index.md"
     if not index.exists():
-        index.write_text("# Learning Notes\n\nNo approved lessons yet.\n", encoding="utf-8")
+        index.write_text(
+            "# Learning Notes\n\nNo approved lessons yet.\n", encoding="utf-8"
+        )
 
     log = root / "log.md"
     if not log.exists():
         log.write_text(f"# Learning Wiki Log\n\n- {utc_now()} INIT\n", encoding="utf-8")
 
     return {"created": created, "vault": str(root)}
-

@@ -8,4 +8,3 @@ class ValidationError(LearningWikiError):
 
 class StateError(LearningWikiError):
     """Raised when vault state prevents an operation."""
-

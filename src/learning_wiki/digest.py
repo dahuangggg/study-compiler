@@ -15,7 +15,9 @@ PERIODS = {"daily", "weekly", "monthly"}
 def _timestamp(value: datetime) -> str:
     if value.tzinfo is None:
         raise ValidationError("digest timestamp must include a timezone")
-    return value.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        value.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    )
 
 
 def _load_state(vault: Path, name: str, key: str) -> dict[str, Any]:
@@ -40,7 +42,11 @@ def build_digest(
     learning_state = _load_state(root, "learning-state.json", "lessons")
 
     new_sources = sorted(
-        (source for source in manifest["sources"].values() if source.get("status") == "new"),
+        (
+            source
+            for source in manifest["sources"].values()
+            if source.get("status") == "new"
+        ),
         key=lambda source: source["id"],
     )
     staged_lessons = list_drafts(root)
@@ -76,18 +82,25 @@ def build_digest(
         "",
     ]
     if new_sources:
-        lines.extend(f"- `{source['id']}` — {source['title']} ({source['kind']})" for source in new_sources)
+        lines.extend(
+            f"- `{source['id']}` — {source['title']} ({source['kind']})"
+            for source in new_sources
+        )
     else:
         lines.append("- None")
     lines.extend(["", "## Staged Lessons", ""])
     if staged_lessons:
-        lines.extend(f"- `{lesson['slug']}` — {lesson['title']}" for lesson in staged_lessons)
+        lines.extend(
+            f"- `{lesson['slug']}` — {lesson['title']}" for lesson in staged_lessons
+        )
     else:
         lines.append("- None")
     lines.extend(["", "## Review Due", ""])
     if review_items:
         for item in review_items:
-            score = f"score {item['score']}" if item["score"] is not None else "not scored"
+            score = (
+                f"score {item['score']}" if item["score"] is not None else "not scored"
+            )
             reason = "due" if item["due"] else "weak recall"
             lines.append(f"- `{item['slug']}` — {score}; {reason}")
     else:
@@ -101,7 +114,9 @@ def build_digest(
             "",
         ]
     )
-    filename = f"{generated_at.astimezone(UTC).date().isoformat()}-{period}-learning-agenda.md"
+    filename = (
+        f"{generated_at.astimezone(UTC).date().isoformat()}-{period}-learning-agenda.md"
+    )
     destination = root / "_staging/digests" / filename
     destination.write_text("\n".join(lines), encoding="utf-8")
     with (root / "log.md").open("a", encoding="utf-8") as log:
@@ -115,4 +130,3 @@ def build_digest(
             "review_items": len(review_items),
         },
     }
-

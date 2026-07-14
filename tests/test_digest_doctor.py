@@ -24,8 +24,12 @@ class DigestAndDoctorTests(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_digest_agenda_includes_new_staged_and_weak_learning_items(self) -> None:
-        new_source = add_snippet(self.vault, title="Unprocessed", text="A new idea.")["source"]
-        lesson_source = add_snippet(self.vault, title="Lesson", text="Attention uses context.")["source"]
+        new_source = add_snippet(self.vault, title="Unprocessed", text="A new idea.")[
+            "source"
+        ]
+        lesson_source = add_snippet(
+            self.vault, title="Lesson", text="Attention uses context."
+        )["source"]
         create_draft(
             self.vault,
             slug="attention",
@@ -51,11 +55,15 @@ class DigestAndDoctorTests(unittest.TestCase):
         self.assertIn(new_source["id"], digest)
         self.assertIn("attention", digest)
         self.assertIn("score 2", digest)
-        self.assertEqual(result["counts"], {"new_sources": 1, "staged_lessons": 1, "review_items": 1})
+        self.assertEqual(
+            result["counts"], {"new_sources": 1, "staged_lessons": 1, "review_items": 1}
+        )
         self.assertTrue(result["path"].startswith("_staging/digests/"))
 
     def test_doctor_passes_for_complete_learning_flow(self) -> None:
-        source = add_snippet(self.vault, title="Lesson", text="Attention uses context.")["source"]
+        source = add_snippet(
+            self.vault, title="Lesson", text="Attention uses context."
+        )["source"]
         create_draft(
             self.vault,
             slug="attention",
@@ -63,7 +71,9 @@ class DigestAndDoctorTests(unittest.TestCase):
             source_ids=[source["id"]],
             body=VALID_BODY,
         )
-        record_recall(self.vault, "attention", score=4, retelling="Tokens mix relevant context.")
+        record_recall(
+            self.vault, "attention", score=4, retelling="Tokens mix relevant context."
+        )
         promote_draft(self.vault, "attention", approve=True)
         build_digest(self.vault, period="weekly")
 
@@ -87,15 +97,21 @@ class DigestAndDoctorTests(unittest.TestCase):
         self.assertTrue(any("hash drift" in error for error in report["errors"]))
 
     def test_doctor_reports_malformed_state_without_crashing(self) -> None:
-        (self.vault / ".learning-wiki/learning-state.json").write_text("{broken", encoding="utf-8")
+        (self.vault / ".learning-wiki/learning-state.json").write_text(
+            "{broken", encoding="utf-8"
+        )
 
         report = inspect_vault(self.vault)
 
         self.assertFalse(report["ok"])
-        self.assertTrue(any("learning-state.json" in error for error in report["errors"]))
+        self.assertTrue(
+            any("learning-state.json" in error for error in report["errors"])
+        )
 
     def test_doctor_detects_path_escape_and_stale_index(self) -> None:
-        source = add_snippet(self.vault, title="Lesson", text="Attention uses context.")["source"]
+        source = add_snippet(
+            self.vault, title="Lesson", text="Attention uses context."
+        )["source"]
         create_draft(
             self.vault,
             slug="attention",
@@ -119,4 +135,3 @@ class DigestAndDoctorTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

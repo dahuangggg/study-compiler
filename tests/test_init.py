@@ -30,7 +30,9 @@ class InitializeVaultTests(unittest.TestCase):
                 self.assertTrue((vault / relative).exists(), relative)
 
             manifest = json.loads((vault / ".learning-wiki/manifest.json").read_text())
-            state = json.loads((vault / ".learning-wiki/learning-state.json").read_text())
+            state = json.loads(
+                (vault / ".learning-wiki/learning-state.json").read_text()
+            )
             self.assertEqual(manifest, {"schema_version": 1, "sources": {}})
             self.assertEqual(state, {"schema_version": 1, "lessons": {}})
 
@@ -39,7 +41,10 @@ class InitializeVaultTests(unittest.TestCase):
             vault = Path(temp_dir) / "Learn"
             initialize_vault(vault)
             manifest_path = vault / ".learning-wiki/manifest.json"
-            custom = {"schema_version": 1, "sources": {"source-1": {"title": "Keep me"}}}
+            custom = {
+                "schema_version": 1,
+                "sources": {"source-1": {"title": "Keep me"}},
+            }
             manifest_path.write_text(json.dumps(custom), encoding="utf-8")
 
             result = initialize_vault(vault)
@@ -58,4 +63,3 @@ class InitializeVaultTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
