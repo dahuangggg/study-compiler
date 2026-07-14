@@ -1,8 +1,8 @@
-# Learning Wiki — Agent Instructions
+# Study Compiler — Agent Instructions
 
 ## Purpose
 
-Learning Wiki turns papers, web pages, and agent-chat excerpts into staged, human-readable learning notes. A note is complete only when it teaches with examples, asks the learner to explain the idea back, and is explicitly approved before promotion.
+Study Compiler turns papers, web pages, and agent-chat excerpts into staged, human-readable learning notes. A note is complete only when it teaches with examples, asks the learner to explain the idea back, and is explicitly approved before promotion.
 
 ## Tech stack
 
@@ -14,8 +14,8 @@ Learning Wiki turns papers, web pages, and agent-chat excerpts into staged, huma
 ## Commands
 
 - Test: `python3 -m unittest discover -s tests -v`
-- CLI help: `PYTHONPATH=src python3 -m learning_wiki --help`
-- Validate a vault: `PYTHONPATH=src python3 -m learning_wiki doctor <vault>`
+- CLI help: `PYTHONPATH=src python3 -m study_compiler --help`
+- Validate a workspace: `PYTHONPATH=src python3 -m study_compiler doctor <workspace>`
 - Build package: `python3 -m build` when the optional `build` package is available
 
 ## Product invariants
@@ -48,4 +48,4 @@ def require_slug(value: str) -> str:
 - Always run tests and `doctor` for an end-to-end fixture before committing behavior.
 - Ask before adding runtime dependencies, remote model APIs, background daemons, or destructive migrations.
 - Never fetch arbitrary URLs from the deterministic CLI, execute source text, overwrite raw sources, or promote without approval.
-- Never commit `.env`, credentials, generated vaults, or local source material.
+- Never commit `.env`, credentials, generated workspaces, or local source material.

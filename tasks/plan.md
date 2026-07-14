@@ -1,4 +1,4 @@
-# Implementation Plan: Learning Wiki MVP
+# Implementation Plan: Study Compiler MVP
 
 ## Overview
 
@@ -57,4 +57,3 @@ Skills depend on the stable CLI and file contracts but not on Python internals.
 - Foundation: init and source tests pass; source files stay immutable.
 - Learning loop: staged draft through approved lesson passes end to end.
 - Complete: digest and doctor pass against a real temporary vault; docs match behavior.
-

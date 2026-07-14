@@ -4,11 +4,11 @@ import unittest
 from datetime import UTC, datetime
 from pathlib import Path
 
-from learning_wiki.digest import build_digest
-from learning_wiki.doctor import inspect_vault
-from learning_wiki.lessons import create_draft, promote_draft, record_recall
-from learning_wiki.sources import add_local_source, add_snippet
-from learning_wiki.storage import initialize_vault
+from study_compiler.digest import build_digest
+from study_compiler.doctor import inspect_vault
+from study_compiler.lessons import create_draft, promote_draft, record_recall
+from study_compiler.sources import add_local_source, add_snippet
+from study_compiler.storage import initialize_vault
 
 from tests.test_lessons import VALID_BODY
 
@@ -178,7 +178,9 @@ class DigestAndDoctorTests(unittest.TestCase):
         report = inspect_vault(self.vault)
 
         self.assertFalse(report["ok"])
-        self.assertTrue(any("escapes the vault" in error for error in report["errors"]))
+        self.assertTrue(
+            any("escapes the workspace" in error for error in report["errors"])
+        )
         self.assertTrue(any("index.md is stale" in error for error in report["errors"]))
 
 

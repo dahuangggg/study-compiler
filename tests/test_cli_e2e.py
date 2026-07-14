@@ -88,7 +88,7 @@ class CommandLineEndToEndTests(unittest.TestCase):
         environment = os.environ.copy()
         environment["PYTHONPATH"] = str(project_root / "src")
         return subprocess.run(
-            [sys.executable, "-m", "learning_wiki", *arguments],
+            [sys.executable, "-m", "study_compiler", *arguments],
             cwd=project_root,
             env=environment,
             capture_output=True,

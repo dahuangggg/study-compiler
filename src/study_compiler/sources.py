@@ -9,7 +9,14 @@ from typing import Any, BinaryIO
 from urllib.parse import urlsplit, urlunsplit
 
 from .errors import StateError, ValidationError
-from .storage import read_json, require_vault, safe_child, state_file, utc_now, write_json
+from .storage import (
+    read_json,
+    require_vault,
+    safe_child,
+    state_file,
+    utc_now,
+    write_json,
+)
 
 DEFAULT_MAX_BYTES = 50 * 1024 * 1024
 LOCAL_KINDS = {"paper", "document", "chat"}

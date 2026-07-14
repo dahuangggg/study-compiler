@@ -8,8 +8,8 @@ import unittest
 from io import StringIO
 from pathlib import Path
 
-from learning_wiki.errors import StateError
-from learning_wiki.installer import SKILL_NAMES, choose_agent_names, install_skills
+from study_compiler.errors import StateError
+from study_compiler.installer import SKILL_NAMES, choose_agent_names, install_skills
 
 
 class SkillInstallerTests(unittest.TestCase):
@@ -54,6 +54,22 @@ class SkillInstallerTests(unittest.TestCase):
 
         self.assertEqual(marker.read_text(encoding="utf-8"), "keep me")
 
+    def test_legacy_managed_skill_links_are_replaced_without_force(self) -> None:
+        target = self.root / "agent-skills"
+        legacy_root = self.root / "learning-wiki/share/learning-wiki/skills"
+        for name in SKILL_NAMES:
+            legacy_skill = legacy_root / name
+            legacy_skill.mkdir(parents=True)
+            (legacy_skill / "SKILL.md").write_text("legacy\n", encoding="utf-8")
+            target.mkdir(parents=True, exist_ok=True)
+            (target / name).symlink_to(legacy_skill, target_is_directory=True)
+
+        result = install_skills(self.skills, [target])
+
+        self.assertEqual(result[0]["installed"], list(SKILL_NAMES))
+        for name in SKILL_NAMES:
+            self.assertEqual((target / name).resolve(), (self.skills / name).resolve())
+
     def test_copy_install_is_idempotent_and_force_replaces_changed_copy(self) -> None:
         target = self.root / "agent-skills"
         install_skills(self.skills, [target], copy=True)
@@ -79,7 +95,8 @@ class SkillInstallerTests(unittest.TestCase):
         )
 
         self.assertEqual(selected, ["codex", "claude"])
-        self.assertIn("↑/↓", output.getvalue())
+        self.assertIn("↑/↓ Move", output.getvalue())
+        self.assertNotIn("选择", output.getvalue())
         self.assertIn("Codex", output.getvalue())
         self.assertIn("Claude Code", output.getvalue())
 
@@ -96,8 +113,8 @@ class SetupCommandTests(unittest.TestCase):
             environment.update(
                 {
                     "HOME": str(home),
-                    "LEARNING_WIKI_BIN_DIR": str(root / "bin"),
-                    "LEARNING_WIKI_TOOL_DIR": str(root / "tools"),
+                    "STUDY_COMPILER_BIN_DIR": str(root / "bin"),
+                    "STUDY_COMPILER_TOOL_DIR": str(root / "tools"),
                     "UV_CACHE_DIR": str(root / "uv-cache"),
                 }
             )
@@ -106,7 +123,7 @@ class SetupCommandTests(unittest.TestCase):
                 [
                     "bash",
                     str(project_root / "install.sh"),
-                    "--vault",
+                    "--workspace",
                     str(vault),
                     "--agent",
                     "codex",
@@ -119,14 +136,14 @@ class SetupCommandTests(unittest.TestCase):
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            self.assertIn("Learning Wiki 已准备好", completed.stdout)
+            self.assertIn("Study Compiler is ready", completed.stdout)
             self.assertIn(str(vault.resolve()), completed.stdout)
             self.assertNotIn('{"targets":', completed.stdout)
             combined_output = completed.stdout + completed.stderr
             self.assertNotIn("Resolved 1 package", combined_output)
             self.assertNotIn("Prepared 1 package", combined_output)
-            self.assertNotIn("learning-wiki==", combined_output)
-            self.assertTrue((root / "bin/learning-wiki").exists())
+            self.assertNotIn("study-compiler==", combined_output)
+            self.assertTrue((root / "bin/study-compiler").exists())
             for name in SKILL_NAMES:
                 installed = home / ".codex/skills" / name
                 self.assertTrue(installed.is_symlink())
@@ -148,7 +165,7 @@ class SetupCommandTests(unittest.TestCase):
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            self.assertIn("./install.sh --vault", completed.stdout)
+            self.assertIn("./install.sh --workspace", completed.stdout)
             self.assertFalse((Path(temp_dir) / ".codex").exists())
 
     @unittest.skipUnless(shutil.which("uv"), "uv is required for cache regression")
@@ -164,7 +181,7 @@ class SetupCommandTests(unittest.TestCase):
                     ".git", ".venv", "build", "dist", "*.egg-info", "__pycache__"
                 ),
             )
-            package_init = checkout / "src/learning_wiki/__init__.py"
+            package_init = checkout / "src/study_compiler/__init__.py"
             package_init.write_text(
                 package_init.read_text(encoding="utf-8")
                 + '\nINSTALL_TEST_MARKER = "first"\n',
@@ -175,8 +192,8 @@ class SetupCommandTests(unittest.TestCase):
             environment.update(
                 {
                     "HOME": str(root / "home"),
-                    "LEARNING_WIKI_BIN_DIR": str(root / "bin"),
-                    "LEARNING_WIKI_TOOL_DIR": str(root / "tools"),
+                    "STUDY_COMPILER_BIN_DIR": str(root / "bin"),
+                    "STUDY_COMPILER_TOOL_DIR": str(root / "tools"),
                     "UV_CACHE_DIR": str(root / "uv-cache"),
                 }
             )
@@ -185,7 +202,7 @@ class SetupCommandTests(unittest.TestCase):
                 str(checkout / "install.sh"),
                 "--agent",
                 "codex",
-                "--vault",
+                "--workspace",
                 str(root / "Learn"),
             ]
 
@@ -198,10 +215,10 @@ class SetupCommandTests(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(first.returncode, 0, first.stderr)
-            installed_python = root / "tools/learning-wiki/bin/python"
+            installed_python = root / "tools/study-compiler/bin/python"
             installed_init = next(
-                (root / "tools/learning-wiki").glob(
-                    "lib/python*/site-packages/learning_wiki/__init__.py"
+                (root / "tools/study-compiler").glob(
+                    "lib/python*/site-packages/study_compiler/__init__.py"
                 )
             )
             self.assertIn(
@@ -213,7 +230,7 @@ class SetupCommandTests(unittest.TestCase):
                 [
                     str(installed_python),
                     "-c",
-                    "import learning_wiki; print(learning_wiki.INSTALL_TEST_MARKER)",
+                    "import study_compiler; print(study_compiler.INSTALL_TEST_MARKER)",
                 ],
                 env=environment,
                 capture_output=True,
@@ -243,7 +260,7 @@ class SetupCommandTests(unittest.TestCase):
                 [
                     str(installed_python),
                     "-c",
-                    "import learning_wiki; print(learning_wiki.INSTALL_TEST_MARKER)",
+                    "import study_compiler; print(study_compiler.INSTALL_TEST_MARKER)",
                 ],
                 env=environment,
                 capture_output=True,
@@ -262,7 +279,7 @@ class SetupCommandTests(unittest.TestCase):
 
             completed = self.run_cli(
                 "setup",
-                "--vault",
+                "--workspace",
                 str(vault),
                 "--target",
                 str(target),
@@ -270,11 +287,11 @@ class SetupCommandTests(unittest.TestCase):
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            self.assertIn("Learning Wiki 已准备好", completed.stdout)
-            self.assertIn("5 个 Skills", completed.stdout)
+            self.assertIn("Study Compiler is ready", completed.stdout)
+            self.assertIn("5 skills ready", completed.stdout)
             self.assertIn(str(vault.resolve()), completed.stdout)
             self.assertNotIn('{"targets":', completed.stdout)
-            self.assertTrue((vault / ".learning-wiki/manifest.json").is_file())
+            self.assertTrue((vault / ".study-compiler/manifest.json").is_file())
             for name in SKILL_NAMES:
                 self.assertTrue((target / name / "SKILL.md").is_file())
                 self.assertFalse((target / name).is_symlink())
@@ -287,7 +304,7 @@ class SetupCommandTests(unittest.TestCase):
 
             completed = self.run_cli(
                 "setup",
-                "--vault",
+                "--workspace",
                 str(vault),
                 "--target",
                 str(target),
@@ -297,7 +314,7 @@ class SetupCommandTests(unittest.TestCase):
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
             payload = json.loads(completed.stdout)
-            self.assertEqual(payload["vault"]["vault"], str(vault.resolve()))
+            self.assertEqual(payload["workspace"]["workspace"], str(vault.resolve()))
             self.assertEqual(payload["targets"][0]["installed"], list(SKILL_NAMES))
 
     def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
@@ -305,7 +322,7 @@ class SetupCommandTests(unittest.TestCase):
         environment = os.environ.copy()
         environment["PYTHONPATH"] = str(project_root / "src")
         return subprocess.run(
-            [sys.executable, "-m", "learning_wiki", *arguments],
+            [sys.executable, "-m", "study_compiler", *arguments],
             cwd=project_root,
             env=environment,
             capture_output=True,

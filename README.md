@@ -1,6 +1,6 @@
-# Learning Wiki
+# Study Compiler
 
-Learning Wiki is a local-first learning compiler for papers, webpages, and Agent conversations. It combines a deterministic CLI with Agent Skills so source handling stays reliable while teaching style can adapt to the material and learner.
+Study Compiler is a local-first learning workflow for papers, webpages, and Agent conversations. It combines a deterministic CLI with Agent Skills so source handling stays reliable while teaching style can adapt to the material and learner. It is not a general-purpose wiki: it compiles source material into teachable lessons, recall practice, and reviewed notes.
 
 The goal is not to accumulate summaries. The goal is to produce notes a person can understand, explain with examples, and retell in their own words.
 
@@ -21,26 +21,26 @@ Generated lessons never enter the formal notebook automatically. They stay in `_
 
 ## Install
 
-Learning Wiki requires Python 3.11 or newer and has no runtime dependencies.
+Study Compiler requires Python 3.11 or newer and has no runtime dependencies.
 
 From a cloned checkout, one command installs the CLI, discovers your local Agent,
-installs all five bundled Skills, and initializes a learning vault:
+installs all five bundled Skills, and initializes a study workspace:
 
 ```bash
-cd ~/Github/learning-wiki
-./install.sh --vault ~/Documents/MyLearning
+cd ~/Github/study-compiler
+./install.sh --workspace ~/Documents/MyLearning
 ```
 
 The installer uses `uv` when available and otherwise creates an isolated Python
 virtual environment. In an interactive terminal it opens a multi-select menu:
 
 ```text
-选择要安装 Learning Wiki Skills 的 Agent
-↑/↓ 移动  空格选择  Enter 确认
+Select where to install Study Compiler skills
+↑/↓ Move  Space Toggle  Enter Confirm
 
  › ● Codex
    ○ Claude Code
-   ○ 通用 Agents（OpenCode / Aider 等）
+   ○ Shared agents (OpenCode, Aider, and others)
 ```
 
 Detected Agents start selected. Restart the selected Agent after installation
@@ -49,36 +49,36 @@ so it reloads the Skills.
 Useful variants:
 
 ```bash
-./install.sh --agent all --vault ~/Documents/MyLearning
-./install.sh --agent claude --vault ~/Documents/MyLearning
+./install.sh --agent all --workspace ~/Documents/MyLearning
+./install.sh --agent claude --workspace ~/Documents/MyLearning
 ./install.sh --target ~/.my-agent/skills --copy
 ```
 
 Existing same-name Skills are never overwritten silently. Re-running the
 installer is safe when the installed content is unchanged; use `--force` only
-when you intentionally want to replace conflicting Learning Wiki Skills.
+when you intentionally want to replace conflicting Study Compiler skills.
 
 If the CLI is already installed, the equivalent setup command is:
 
 ```bash
-learning-wiki setup --agent auto --vault ~/Documents/MyLearning
+study-compiler setup --agent auto --workspace ~/Documents/MyLearning
 ```
 
 `setup` prints a concise human-readable summary by default. Automation can keep
-the stable machine-readable response with `learning-wiki setup ... --json`.
+the stable machine-readable response with `study-compiler setup ... --json`.
 
 ## Quick start
 
-Point the shell at the vault created during installation:
+Point the shell at the workspace created during installation:
 
 ```bash
-export LEARNING_WIKI_VAULT=~/Documents/MyLearning
+export STUDY_COMPILER_WORKSPACE=~/Documents/MyLearning
 ```
 
 Import a paper:
 
 ```bash
-learning-wiki source add "$LEARNING_WIKI_VAULT" paper.pdf \
+study-compiler source add "$STUDY_COMPILER_WORKSPACE" paper.pdf \
   --kind paper \
   --title "Attention Is All You Need"
 ```
@@ -86,18 +86,18 @@ learning-wiki source add "$LEARNING_WIKI_VAULT" paper.pdf \
 Register a webpage. The deterministic CLI does not fetch arbitrary URLs; let an Agent fetch and clean it, then attach the immutable snapshot:
 
 ```bash
-learning-wiki source add-url "$LEARNING_WIKI_VAULT" \
+study-compiler source add-url "$STUDY_COMPILER_WORKSPACE" \
   https://example.com/article \
   --title "Example article"
 
-learning-wiki source snapshot-web "$LEARNING_WIKI_VAULT" \
+study-compiler source snapshot-web "$STUDY_COMPILER_WORKSPACE" \
   <returned-source-id> /tmp/example-article.md
 ```
 
 Save a selected Agent chat fragment:
 
 ```bash
-learning-wiki source add-snippet "$LEARNING_WIKI_VAULT" \
+study-compiler source add-snippet "$STUDY_COMPILER_WORKSPACE" \
   --kind chat \
   --title "Attention explanation" \
   --from-file /tmp/attention-chat.md
@@ -120,7 +120,7 @@ then use `$learning-stage-commit` to approve the formal note.
 Build a deterministic agenda at any cadence:
 
 ```bash
-learning-wiki digest build "$LEARNING_WIKI_VAULT" --period weekly
+study-compiler digest build "$STUDY_COMPILER_WORKSPACE" --period weekly
 ```
 
 Then invoke `$learning-digest` from a Codex automation, cron-triggered Agent session, or manually. Scheduled runs may create staged guidance but cannot approve notes.
@@ -135,11 +135,11 @@ The agenda prioritizes weak or due recall, staged lessons, blocking prerequisite
 - `learning-stage-commit`: preview and explicitly promote one approved draft.
 - `learning-digest`: turn due work into a focused human-readable learning session.
 
-## Vault layout
+## Workspace layout
 
 ```text
 MyLearning/
-├── .learning-wiki/
+├── .study-compiler/
 │   ├── manifest.json
 │   └── learning-state.json
 ├── sources/
@@ -158,7 +158,7 @@ Source provenance and learner mastery deliberately live in different state files
 
 ```bash
 python3 -m unittest discover -s tests -v
-learning-wiki doctor "$LEARNING_WIKI_VAULT" --json
+study-compiler doctor "$STUDY_COMPILER_WORKSPACE" --json
 ```
 
 `doctor` checks source hashes, path containment, lesson schemas, source references, review records, state JSON, and the generated lesson index.
@@ -167,4 +167,4 @@ See [architecture](docs/architecture.md), [specification](docs/spec.md), [threat
 
 ## MVP boundary
 
-Version 0.1 intentionally has no hosted service, model-provider dependency, vector database, or automatic publishing. Those can be added after the core learning loop proves useful.
+Version 0.2 intentionally has no hosted service, model-provider dependency, vector database, or automatic publishing. Those can be added after the core learning loop proves useful.

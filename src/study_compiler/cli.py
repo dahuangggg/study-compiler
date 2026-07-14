@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-from .errors import LearningWikiError, ValidationError
+from .errors import StudyCompilerError, ValidationError
 from .digest import build_digest
 from .doctor import inspect_vault
 from .lessons import (
@@ -36,14 +36,14 @@ from .storage import initialize_vault
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="learning-wiki",
+        prog="study-compiler",
         description="Compile sources into reviewed, human-readable learning notes.",
     )
     subcommands = parser.add_subparsers(dest="command", required=True)
     setup = subcommands.add_parser(
-        "setup", help="install Agent Skills and optionally initialize a vault"
+        "setup", help="install Agent Skills and optionally initialize a workspace"
     )
-    setup.add_argument("--vault", type=Path)
+    setup.add_argument("--workspace", "--vault", dest="workspace", type=Path)
     setup.add_argument(
         "--agent",
         action="append",
@@ -65,8 +65,8 @@ def build_parser() -> argparse.ArgumentParser:
     setup.add_argument(
         "--json", action="store_true", help="print machine-readable JSON"
     )
-    init = subcommands.add_parser("init", help="initialize a learning vault")
-    init.add_argument("vault", type=Path)
+    init = subcommands.add_parser("init", help="initialize a study workspace")
+    init.add_argument("workspace", type=Path)
 
     source = subcommands.add_parser(
         "source", help="register immutable learning sources"
@@ -74,7 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
     source_commands = source.add_subparsers(dest="source_command", required=True)
 
     source_add = source_commands.add_parser("add", help="snapshot a local source file")
-    source_add.add_argument("vault", type=Path)
+    source_add.add_argument("workspace", type=Path)
     source_add.add_argument("path", type=Path)
     source_add.add_argument(
         "--kind", choices=("paper", "document", "chat"), required=True
@@ -84,14 +84,14 @@ def build_parser() -> argparse.ArgumentParser:
     source_url = source_commands.add_parser(
         "add-url", help="register an HTTPS web reference"
     )
-    source_url.add_argument("vault", type=Path)
+    source_url.add_argument("workspace", type=Path)
     source_url.add_argument("url")
     source_url.add_argument("--title")
 
     source_snippet = source_commands.add_parser(
         "add-snippet", help="snapshot a chat excerpt"
     )
-    source_snippet.add_argument("vault", type=Path)
+    source_snippet.add_argument("workspace", type=Path)
     source_snippet.add_argument("--kind", choices=("chat",), default="chat")
     source_snippet.add_argument("--title", required=True)
     snippet_input = source_snippet.add_mutually_exclusive_group(required=True)
@@ -101,12 +101,12 @@ def build_parser() -> argparse.ArgumentParser:
     source_web_snapshot = source_commands.add_parser(
         "snapshot-web", help="attach an Agent-fetched snapshot to a web source"
     )
-    source_web_snapshot.add_argument("vault", type=Path)
+    source_web_snapshot.add_argument("workspace", type=Path)
     source_web_snapshot.add_argument("source_id")
     source_web_snapshot.add_argument("path", type=Path)
 
     source_list = source_commands.add_parser("list", help="list registered sources")
-    source_list.add_argument("vault", type=Path)
+    source_list.add_argument("workspace", type=Path)
     source_list.add_argument("--json", action="store_true")
 
     draft = subcommands.add_parser("draft", help="manage staged learning lessons")
@@ -114,24 +114,24 @@ def build_parser() -> argparse.ArgumentParser:
     draft_create = draft_commands.add_parser(
         "create", help="validate and stage a lesson"
     )
-    draft_create.add_argument("vault", type=Path)
+    draft_create.add_argument("workspace", type=Path)
     draft_create.add_argument("--slug", required=True)
     draft_create.add_argument("--title", required=True)
     draft_create.add_argument("--source", dest="source_ids", nargs="+", required=True)
     draft_create.add_argument("--content-file", type=Path, required=True)
     draft_list = draft_commands.add_parser("list", help="list staged lessons")
-    draft_list.add_argument("vault", type=Path)
+    draft_list.add_argument("workspace", type=Path)
     draft_list.add_argument("--json", action="store_true")
     draft_revise = draft_commands.add_parser(
         "revise", help="replace and revalidate a staged lesson body"
     )
-    draft_revise.add_argument("vault", type=Path)
+    draft_revise.add_argument("workspace", type=Path)
     draft_revise.add_argument("slug")
     draft_revise.add_argument("--content-file", type=Path, required=True)
     draft_promote = draft_commands.add_parser(
         "promote", help="approve and promote a lesson"
     )
-    draft_promote.add_argument("vault", type=Path)
+    draft_promote.add_argument("workspace", type=Path)
     draft_promote.add_argument("slug")
     draft_promote.add_argument("--approve", action="store_true")
 
@@ -140,7 +140,7 @@ def build_parser() -> argparse.ArgumentParser:
     recall_record = recall_commands.add_parser(
         "record", help="record a learner retelling"
     )
-    recall_record.add_argument("vault", type=Path)
+    recall_record.add_argument("workspace", type=Path)
     recall_record.add_argument("slug")
     recall_record.add_argument("--score", type=int, choices=range(1, 6), required=True)
     recall_record.add_argument("--retelling-file", type=Path, required=True)
@@ -150,13 +150,13 @@ def build_parser() -> argparse.ArgumentParser:
     digest_build = digest_commands.add_parser(
         "build", help="build a staged learning agenda"
     )
-    digest_build.add_argument("vault", type=Path)
+    digest_build.add_argument("workspace", type=Path)
     digest_build.add_argument(
         "--period", choices=("daily", "weekly", "monthly"), default="weekly"
     )
 
-    doctor = subcommands.add_parser("doctor", help="validate all vault invariants")
-    doctor.add_argument("vault", type=Path)
+    doctor = subcommands.add_parser("doctor", help="validate all workspace invariants")
+    doctor.add_argument("workspace", type=Path)
     doctor.add_argument("--json", action="store_true")
     return parser
 
@@ -190,7 +190,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     copy=args.copy,
                     force=args.force,
                 ),
-                "vault": initialize_vault(args.vault) if args.vault else None,
+                "workspace": (
+                    initialize_vault(args.workspace) if args.workspace else None
+                ),
             }
             if args.json:
                 print(json.dumps(result, ensure_ascii=False, sort_keys=True))
@@ -198,24 +200,24 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(format_setup_summary(result))
             return 0
         elif args.command == "init":
-            result = initialize_vault(args.vault)
+            result = initialize_vault(args.workspace)
         elif args.command == "source" and args.source_command == "add":
             result = add_local_source(
-                args.vault, args.path, kind=args.kind, title=args.title
+                args.workspace, args.path, kind=args.kind, title=args.title
             )
         elif args.command == "source" and args.source_command == "add-url":
-            result = add_url_source(args.vault, args.url, title=args.title)
+            result = add_url_source(args.workspace, args.url, title=args.title)
         elif args.command == "source" and args.source_command == "add-snippet":
             text = args.text
             if args.from_file is not None:
                 text = _read_text_file(args.from_file, "snippet file")
             result = add_snippet(
-                args.vault, title=args.title, text=text, kind=args.kind
+                args.workspace, title=args.title, text=text, kind=args.kind
             )
         elif args.command == "source" and args.source_command == "snapshot-web":
-            result = attach_web_snapshot(args.vault, args.source_id, args.path)
+            result = attach_web_snapshot(args.workspace, args.source_id, args.path)
         elif args.command == "source" and args.source_command == "list":
-            sources = list_sources(args.vault)
+            sources = list_sources(args.workspace)
             if not args.json:
                 for source in sources:
                     print(f"{source['id']}\t{source['kind']}\t{source['title']}")
@@ -223,14 +225,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = {"sources": sources}
         elif args.command == "draft" and args.draft_command == "create":
             result = create_draft(
-                args.vault,
+                args.workspace,
                 slug=args.slug,
                 title=args.title,
                 source_ids=args.source_ids,
                 body=_read_text_file(args.content_file, "lesson content file"),
             )
         elif args.command == "draft" and args.draft_command == "list":
-            drafts = list_drafts(args.vault)
+            drafts = list_drafts(args.workspace)
             if not args.json:
                 for draft in drafts:
                     print(f"{draft['slug']}\t{draft['title']}")
@@ -238,28 +240,28 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = {"drafts": drafts}
         elif args.command == "draft" and args.draft_command == "revise":
             result = revise_draft(
-                args.vault,
+                args.workspace,
                 args.slug,
                 body=_read_text_file(args.content_file, "lesson content file"),
             )
         elif args.command == "draft" and args.draft_command == "promote":
-            result = promote_draft(args.vault, args.slug, approve=args.approve)
+            result = promote_draft(args.workspace, args.slug, approve=args.approve)
         elif args.command == "recall" and args.recall_command == "record":
             result = record_recall(
-                args.vault,
+                args.workspace,
                 args.slug,
                 score=args.score,
                 retelling=_read_text_file(args.retelling_file, "retelling file"),
             )
         elif args.command == "digest" and args.digest_command == "build":
-            result = build_digest(args.vault, period=args.period)
+            result = build_digest(args.workspace, period=args.period)
         elif args.command == "doctor":
-            result = inspect_vault(args.vault)
+            result = inspect_vault(args.workspace)
             if args.json:
                 print(json.dumps(result, ensure_ascii=False, sort_keys=True))
             else:
                 status = "PASS" if result["ok"] else "FAIL"
-                print(f"Learning Wiki doctor: {status}")
+                print(f"Study Compiler doctor: {status}")
                 for error in result["errors"]:
                     print(f"error: {error}")
                 for warning in result["warnings"]:
@@ -268,7 +270,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:  # pragma: no cover - argparse owns command validation
             parser.error("unknown command")
             return 2
-    except LearningWikiError as error:
+    except StudyCompilerError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))

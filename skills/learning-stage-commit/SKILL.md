@@ -1,6 +1,6 @@
 ---
 name: learning-stage-commit
-description: Review staged Learning Wiki lesson drafts and promote only those the user explicitly approves. Use when the user asks to review, approve, accept, commit, or move a generated learning draft into formal notes.
+description: Review staged Study Compiler lesson drafts and promote only those the user explicitly approves. Use when the user asks to review, approve, accept, commit, or move a generated learning draft into formal notes.
 ---
 
 # Learning Stage Commit
@@ -12,7 +12,7 @@ Protect the boundary between generated drafts and the learner's formal notes.
 Run:
 
 ```bash
-learning-wiki draft list <vault> --json
+study-compiler draft list <workspace> --json
 ```
 
 For each selected draft, show:
@@ -33,8 +33,8 @@ Ask the user to approve the specific slug. A request to inspect, summarize, or i
 After explicit approval, run:
 
 ```bash
-learning-wiki draft promote <vault> <slug> --approve
-learning-wiki doctor <vault> --json
+study-compiler draft promote <workspace> <slug> --approve
+study-compiler doctor <workspace> --json
 ```
 
 If `doctor` fails, report the exact error and do not claim promotion is healthy. Do not delete rejected drafts; leave them staged unless the user asks for a separate rejection workflow.
@@ -42,4 +42,3 @@ If `doctor` fails, report the exact error and do not claim promotion is healthy.
 ## Finish
 
 Report the approved note path, source IDs, current mastery signal, and doctor result. Never promote multiple drafts when the user approved only one.
-

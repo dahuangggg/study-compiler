@@ -2,7 +2,7 @@
 
 ## Design thesis
 
-Learning Wiki separates reliable mechanics from semantic teaching judgment:
+Study Compiler separates reliable mechanics from semantic teaching judgment:
 
 ```text
 papers / web snapshots / chat excerpts
@@ -57,7 +57,7 @@ All lessons begin in `_staging/lessons`. The CLI validates required sections and
 ## Module boundaries
 
 ```text
-src/learning_wiki/
+src/study_compiler/
   cli.py          command parsing and stable output contract
   errors.py       public validation/state errors
   models.py       source and learning-state schemas
@@ -65,7 +65,7 @@ src/learning_wiki/
   sources.py      import, hashing, URL registration, deduplication
   lessons.py      draft validation, recall, promotion
   digest.py       deterministic learning agenda generation
-  doctor.py       whole-vault invariant checks
+  doctor.py       whole-workspace invariant checks
 ```
 
 ## Key decisions
@@ -80,4 +80,3 @@ src/learning_wiki/
 ## Evolution path
 
 Future versions can add provider adapters, a review UI, background automation, and multi-user storage behind the existing CLI/data contracts. Those are extensions, not prerequisites for validating the learning loop.
-

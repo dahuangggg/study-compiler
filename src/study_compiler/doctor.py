@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .errors import LearningWikiError, ValidationError
+from .errors import StudyCompilerError, ValidationError
 from .lessons import parse_lesson, render_index
 from .storage import read_json, require_vault, safe_child, state_file
 
@@ -21,7 +21,7 @@ def _hash_file(path: Path) -> str:
 def _read_state(path: Path, errors: list[str]) -> dict[str, Any] | None:
     try:
         return read_json(path)
-    except LearningWikiError as error:
+    except StudyCompilerError as error:
         errors.append(str(error))
         return None
 
@@ -57,7 +57,7 @@ def _check_source(
     try:
         snapshot_path = safe_child(root, snapshot)
     except ValidationError:
-        errors.append(f"source {source_id} snapshot escapes the vault")
+        errors.append(f"source {source_id} snapshot escapes the workspace")
         return
     if not snapshot_path.is_file():
         errors.append(f"source {source_id} snapshot is missing: {snapshot}")
@@ -77,7 +77,7 @@ def _check_lesson(
 ) -> None:
     try:
         metadata, _ = parse_lesson(path.read_text(encoding="utf-8"))
-    except (LearningWikiError, OSError, UnicodeError, TypeError) as error:
+    except (StudyCompilerError, OSError, UnicodeError, TypeError) as error:
         errors.append(f"invalid lesson {path.name}: {error}")
         return
     if metadata.get("status") != expected_status:
@@ -131,7 +131,7 @@ def inspect_vault(vault: Path) -> dict[str, Any]:
         actual_index = (root / "index.md").read_text(encoding="utf-8")
         if actual_index != expected_index:
             errors.append("index.md is stale")
-    except (LearningWikiError, OSError, UnicodeError, TypeError) as error:
+    except (StudyCompilerError, OSError, UnicodeError, TypeError) as error:
         errors.append(f"cannot validate index.md: {error}")
 
     for review_path in sorted((root / "reviews").glob("*.jsonl")):

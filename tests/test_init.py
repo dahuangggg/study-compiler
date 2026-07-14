@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from learning_wiki.errors import ValidationError
-from learning_wiki.storage import initialize_vault, safe_child
+from study_compiler.errors import ValidationError
+from study_compiler.storage import initialize_vault, safe_child
 
 
 class InitializeVaultTests(unittest.TestCase):
@@ -32,7 +32,7 @@ class InitializeVaultTests(unittest.TestCase):
 
             result = initialize_vault(vault)
 
-            self.assertEqual(result["vault"], str(vault.resolve()))
+            self.assertEqual(result["workspace"], str(vault.resolve()))
             self.assertTrue(result["created"])
             for relative in (
                 ".study-compiler/manifest.json",

@@ -5,15 +5,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from learning_wiki.errors import ValidationError
-from learning_wiki.sources import (
+from study_compiler.errors import ValidationError
+from study_compiler.sources import (
     add_local_source,
     add_snippet,
     add_url_source,
     attach_web_snapshot,
     list_sources,
 )
-from learning_wiki.storage import initialize_vault
+from study_compiler.storage import initialize_vault
 
 
 class SourceRegistryTests(unittest.TestCase):

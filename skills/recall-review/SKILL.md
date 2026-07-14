@@ -1,6 +1,6 @@
 ---
 name: recall-review
-description: Evaluate a learner's explain-it-back attempt against a staged or approved Learning Wiki lesson, record mastery, diagnose misconceptions, and revise the staged lesson. Use when the user retells a concept, asks whether they understood it, or wants a learning check.
+description: Evaluate a learner's explain-it-back attempt against a staged or approved Study Compiler lesson, record mastery, diagnose misconceptions, and revise the staged lesson. Use when the user retells a concept, asks whether they understood it, or wants a learning check.
 ---
 
 # Recall Review
@@ -28,7 +28,7 @@ State what was correct, the smallest important gap, and one targeted follow-up q
 Save the learner's exact retelling to a temporary UTF-8 file and run:
 
 ```bash
-learning-wiki recall record <vault> <slug> --score <1-5> --retelling-file <file>
+study-compiler recall record <workspace> <slug> --score <1-5> --retelling-file <file>
 ```
 
 ## Revise a staged lesson
@@ -36,7 +36,7 @@ learning-wiki recall record <vault> <slug> --score <1-5> --retelling-file <file>
 If the lesson is still staged and the failure reveals a teaching problem, revise only the body. Preserve its sources and status. Keep all required headings, then run:
 
 ```bash
-learning-wiki draft revise <vault> <slug> --content-file <revised-body-file>
+study-compiler draft revise <workspace> <slug> --content-file <revised-body-file>
 ```
 
 Do not rewrite an approved lesson silently. Propose a new staged revision in a future version or ask the user how to proceed.
@@ -44,4 +44,3 @@ Do not rewrite an approved lesson silently. Propose a new staged revision in a f
 ## Finish
 
 Give the learner one concise correction and another explain-it-back prompt. Do not promote the lesson; approval belongs to `learning-stage-commit`.
-

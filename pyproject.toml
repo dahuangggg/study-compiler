@@ -3,29 +3,29 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "learning-wiki"
-version = "0.1.1"
+name = "study-compiler"
+version = "0.2.0"
 description = "A local-first, agent-guided learning compiler for Obsidian-compatible notes"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
-authors = [{ name = "Learning Wiki contributors" }]
+authors = [{ name = "Study Compiler contributors" }]
 dependencies = []
 
 [project.scripts]
-learning-wiki = "learning_wiki.cli:entrypoint"
+study-compiler = "study_compiler.cli:entrypoint"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.data-files]
-"share/learning-wiki/skills/learning-digest" = ["skills/learning-digest/SKILL.md"]
-"share/learning-wiki/skills/learning-digest/agents" = ["skills/learning-digest/agents/openai.yaml"]
-"share/learning-wiki/skills/learning-ingest" = ["skills/learning-ingest/SKILL.md"]
-"share/learning-wiki/skills/learning-ingest/agents" = ["skills/learning-ingest/agents/openai.yaml"]
-"share/learning-wiki/skills/learning-stage-commit" = ["skills/learning-stage-commit/SKILL.md"]
-"share/learning-wiki/skills/learning-stage-commit/agents" = ["skills/learning-stage-commit/agents/openai.yaml"]
-"share/learning-wiki/skills/lesson-draft" = ["skills/lesson-draft/SKILL.md"]
-"share/learning-wiki/skills/lesson-draft/agents" = ["skills/lesson-draft/agents/openai.yaml"]
-"share/learning-wiki/skills/recall-review" = ["skills/recall-review/SKILL.md"]
-"share/learning-wiki/skills/recall-review/agents" = ["skills/recall-review/agents/openai.yaml"]
+"share/study-compiler/skills/learning-digest" = ["skills/learning-digest/SKILL.md"]
+"share/study-compiler/skills/learning-digest/agents" = ["skills/learning-digest/agents/openai.yaml"]
+"share/study-compiler/skills/learning-ingest" = ["skills/learning-ingest/SKILL.md"]
+"share/study-compiler/skills/learning-ingest/agents" = ["skills/learning-ingest/agents/openai.yaml"]
+"share/study-compiler/skills/learning-stage-commit" = ["skills/learning-stage-commit/SKILL.md"]
+"share/study-compiler/skills/learning-stage-commit/agents" = ["skills/learning-stage-commit/agents/openai.yaml"]
+"share/study-compiler/skills/lesson-draft" = ["skills/lesson-draft/SKILL.md"]
+"share/study-compiler/skills/lesson-draft/agents" = ["skills/lesson-draft/agents/openai.yaml"]
+"share/study-compiler/skills/recall-review" = ["skills/recall-review/SKILL.md"]
+"share/study-compiler/skills/recall-review/agents" = ["skills/recall-review/agents/openai.yaml"]

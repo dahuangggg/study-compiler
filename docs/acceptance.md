@@ -2,18 +2,18 @@
 
 ## A. Independent project
 
-- [x] The project exists at `~/Github/learning-wiki` with its own Git history.
+- [x] The project exists at `~/Github/study-compiler` with its own Git history.
 - [x] No Git remote, subtree, copied `.git`, or fork relationship points to `obsidian-wiki`.
 - [x] All implementation and Skills are original files in this repository.
 
-## B. Vault initialization
+## B. Workspace initialization
 
-- [x] `learning-wiki init <temp-vault>` creates every documented directory and valid state file.
+- [x] `study-compiler init <temp-workspace>` creates every documented directory and valid state file.
 - [x] Re-running `init` is safe and does not discard existing data.
 
 ## B2. Automatic installation
 
-- [x] `./install.sh --vault <path>` installs the CLI, all five Skills, and initializes the vault.
+- [x] `./install.sh --workspace <path>` installs the CLI, all five Skills, and initializes the workspace.
 - [x] Agent skill directories can be auto-detected or selected explicitly for Codex, Claude, shared Agents, or a custom target.
 - [x] Interactive installation supports arrow-key navigation, space to toggle, and Enter to confirm Agent targets.
 - [x] Human-readable output is the default while `--json` remains available for Agents and scripts.
@@ -53,7 +53,7 @@
 - [x] `doctor` detects malformed JSON, missing source snapshots, hash drift, invalid drafts, unknown source IDs, stale index entries, and path escapes.
 - [x] `doctor --json` returns stable machine-readable results.
 - [x] All tests pass with no skipped tests.
-- [x] An end-to-end temporary-vault run passes from initialization through approved note and clean doctor report.
+- [x] An end-to-end temporary-workspace run passes from initialization through approved note and clean doctor report.
 - [x] Documentation covers architecture, commands, trust boundaries, and the human approval workflow.
 
 ## Verification commands
@@ -61,8 +61,8 @@
 ```bash
 ./install.sh --help
 python3 -m unittest discover -s tests -v
-PYTHONPATH=src python3 -m learning_wiki --help
-PYTHONPATH=src python3 -m learning_wiki doctor <acceptance-vault> --json
+PYTHONPATH=src python3 -m study_compiler --help
+PYTHONPATH=src python3 -m study_compiler doctor <acceptance-workspace> --json
 git status --short
 git remote -v
 ```

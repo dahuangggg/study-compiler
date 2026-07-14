@@ -1,6 +1,6 @@
 ---
 name: learning-digest
-description: Turn Learning Wiki's daily, weekly, or monthly agenda into a focused human-readable learning session. Use for scheduled learning notes, study plans, weekly reviews, due reviews, or deciding what the learner should study next.
+description: Turn Study Compiler's daily, weekly, or monthly agenda into a focused human-readable learning session. Use for scheduled learning notes, study plans, weekly reviews, due reviews, or deciding what the learner should study next.
 ---
 
 # Learning Digest
@@ -9,12 +9,12 @@ Choose a useful learning session, not an activity report.
 
 ## Build the deterministic agenda
 
-Resolve the vault and run one of:
+Resolve the workspace and run one of:
 
 ```bash
-learning-wiki digest build <vault> --period daily
-learning-wiki digest build <vault> --period weekly
-learning-wiki digest build <vault> --period monthly
+study-compiler digest build <workspace> --period daily
+study-compiler digest build <workspace> --period weekly
+study-compiler digest build <workspace> --period monthly
 ```
 
 Read the returned staged agenda. Load only the lessons and registered sources needed for its highest-priority items.
@@ -46,4 +46,3 @@ Ground claims in registered source IDs. Mark inference and disagreement. Do not 
 ## Scheduled runs
 
 A scheduler may invoke this Skill periodically, but a scheduled run may only create or update staged material. It must never imply human approval. End by reporting the staged agenda path and the next requested learner action.
-

@@ -11,7 +11,7 @@
 - The learner's private source material and chat history.
 - Provenance and source integrity.
 - Approved notes and learning history.
-- Files outside the configured vault.
+- Files outside the configured workspace.
 
 ## Abuse cases and controls
 
@@ -29,6 +29,5 @@
 ## Residual risks
 
 - Hostnames can resolve differently when an external Agent fetches them; the Agent's web tool must provide its own network isolation.
-- Local filesystem permissions cannot protect against the vault owner deliberately changing snapshots; `doctor` detects rather than prevents owner tampering.
+- Local filesystem permissions cannot protect against the workspace owner deliberately changing snapshots; `doctor` detects rather than prevents owner tampering.
 - Mastery scores are subjective learning signals, not validated educational measurements.
-

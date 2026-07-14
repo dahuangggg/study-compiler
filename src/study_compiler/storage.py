@@ -32,7 +32,7 @@ def safe_child(root: Path, *parts: str) -> Path:
     try:
         candidate.relative_to(resolved_root)
     except ValueError as error:
-        raise ValidationError("path must stay inside the vault") from error
+        raise ValidationError("path must stay inside the workspace") from error
     return candidate
 
 
@@ -90,7 +90,7 @@ def require_vault(vault: Path) -> Path:
 def initialize_vault(vault: Path) -> dict[str, Any]:
     root = vault.expanduser().resolve()
     if root.exists() and not root.is_dir():
-        raise ValidationError(f"vault path is not a directory: {root}")
+        raise ValidationError(f"workspace path is not a directory: {root}")
 
     root.mkdir(parents=True, exist_ok=True)
     current_state = root / STATE_DIRECTORY
@@ -122,6 +122,8 @@ def initialize_vault(vault: Path) -> dict[str, Any]:
 
     log = root / "log.md"
     if not log.exists():
-        log.write_text(f"# Study Compiler Log\n\n- {utc_now()} INIT\n", encoding="utf-8")
+        log.write_text(
+            f"# Study Compiler Log\n\n- {utc_now()} INIT\n", encoding="utf-8"
+        )
 
-    return {"created": created, "migrated": migrated, "vault": str(root)}
+    return {"created": created, "migrated": migrated, "workspace": str(root)}

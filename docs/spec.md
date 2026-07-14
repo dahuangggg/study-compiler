@@ -1,4 +1,4 @@
-# Spec: Learning Wiki MVP
+# Spec: Study Compiler MVP
 
 ## Objective
 
@@ -16,36 +16,36 @@ The first user is the project owner. The design must remain portable enough to b
 
 ## Core user stories
 
-1. As a learner, I can initialize an isolated learning vault.
+1. As a learner, I can initialize an isolated study workspace.
 2. I can import a paper/document, register a web URL, or save a chat excerpt without modifying the original input.
 3. An Agent can use project Skills to extract concepts and produce a lesson draft grounded in registered sources.
 4. A lesson draft contains objectives, an intuitive explanation, at least one example, an explain-it-back prompt, and source citations.
 5. I can record my retelling and comprehension score, then let an Agent revise the draft.
 6. I can explicitly approve a staged lesson and promote it into formal notes.
 7. A periodic digest can recommend what to learn, revise, or review next.
-8. I can run a deterministic health check proving the vault is internally consistent.
+8. I can run a deterministic health check proving the workspace is internally consistent.
 
 ## Public CLI contract
 
 ```text
-learning-wiki setup [--vault VAULT] [--agent auto|codex|claude|agents|all]... [--target PATH]... [--copy] [--force] [--json]
-learning-wiki init VAULT
-learning-wiki source add VAULT PATH --kind paper|document|chat [--title TITLE]
-learning-wiki source add-url VAULT URL [--title TITLE]
-learning-wiki source snapshot-web VAULT SOURCE_ID PATH
-learning-wiki source add-snippet VAULT --kind chat --title TITLE (--text TEXT | --from-file PATH)
-learning-wiki source list VAULT [--json]
-learning-wiki draft create VAULT --slug SLUG --title TITLE --source SOURCE_ID... --content-file PATH
-learning-wiki draft list VAULT [--json]
-learning-wiki draft revise VAULT SLUG --content-file PATH
-learning-wiki recall record VAULT SLUG --score 1..5 --retelling-file PATH
-learning-wiki draft promote VAULT SLUG --approve
-learning-wiki digest build VAULT [--period daily|weekly|monthly]
-learning-wiki doctor VAULT [--json]
+study-compiler setup [--workspace WORKSPACE] [--agent auto|codex|claude|agents|all]... [--target PATH]... [--copy] [--force] [--json]
+study-compiler init WORKSPACE
+study-compiler source add WORKSPACE PATH --kind paper|document|chat [--title TITLE]
+study-compiler source add-url WORKSPACE URL [--title TITLE]
+study-compiler source snapshot-web WORKSPACE SOURCE_ID PATH
+study-compiler source add-snippet WORKSPACE --kind chat --title TITLE (--text TEXT | --from-file PATH)
+study-compiler source list WORKSPACE [--json]
+study-compiler draft create WORKSPACE --slug SLUG --title TITLE --source SOURCE_ID... --content-file PATH
+study-compiler draft list WORKSPACE [--json]
+study-compiler draft revise WORKSPACE SLUG --content-file PATH
+study-compiler recall record WORKSPACE SLUG --score 1..5 --retelling-file PATH
+study-compiler draft promote WORKSPACE SLUG --approve
+study-compiler digest build WORKSPACE [--period daily|weekly|monthly]
+study-compiler doctor WORKSPACE [--json]
 ```
 
 `setup` installs the five bundled Agent Skills and optionally initializes the
-vault. Installation is idempotent and preserves conflicting existing Skills
+workspace. Installation is idempotent and preserves conflicting existing Skills
 unless the user explicitly passes `--force`. When no target flag is supplied in
 an interactive terminal, it presents an arrow-key multi-select. Human-readable
 output is the default; `--json` preserves the machine-readable contract.
@@ -54,8 +54,8 @@ All command failures use exit code `2` for invalid user input/state and print `e
 
 ## Data model
 
-- `.learning-wiki/manifest.json`: schema version and imported source records.
-- `.learning-wiki/learning-state.json`: per-lesson mastery and review scheduling.
+- `.study-compiler/manifest.json`: schema version and imported source records.
+- `.study-compiler/learning-state.json`: per-lesson mastery and review scheduling.
 - `sources/<source-id>/`: immutable source snapshot plus `metadata.json`.
 - `_staging/lessons/`: unapproved lesson drafts.
 - `_staging/digests/`: generated periodic learning plans awaiting review.
@@ -89,7 +89,7 @@ The Agent may add prerequisites, counterexamples, equations, exercises, or misco
 - Files, URLs, chat text, and generated Markdown are untrusted inputs.
 - Imported local files have a size cap and are copied byte-for-byte into an immutable source directory.
 - URLs must use HTTPS and may not target localhost, private, link-local, multicast, or reserved IP literals.
-- Source-provided paths and generated slugs cannot escape the vault.
+- Source-provided paths and generated slugs cannot escape the workspace.
 - The CLI never executes source content, shells out with source data, or performs arbitrary URL fetches.
 - Promotion validates lesson structure and source IDs and requires explicit approval.
 

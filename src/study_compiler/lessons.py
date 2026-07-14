@@ -7,7 +7,14 @@ from pathlib import Path
 from typing import Any
 
 from .errors import StateError, ValidationError
-from .storage import read_json, require_vault, safe_child, state_file, utc_now, write_json
+from .storage import (
+    read_json,
+    require_vault,
+    safe_child,
+    state_file,
+    utc_now,
+    write_json,
+)
 
 SLUG_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 REQUIRED_HEADINGS = (

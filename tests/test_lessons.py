@@ -4,16 +4,16 @@ import unittest
 from datetime import UTC, datetime
 from pathlib import Path
 
-from learning_wiki.errors import StateError, ValidationError
-from learning_wiki.lessons import (
+from study_compiler.errors import StateError, ValidationError
+from study_compiler.lessons import (
     create_draft,
     list_drafts,
     promote_draft,
     record_recall,
     revise_draft,
 )
-from learning_wiki.sources import add_snippet
-from learning_wiki.storage import initialize_vault
+from study_compiler.sources import add_snippet
+from study_compiler.storage import initialize_vault
 
 
 VALID_BODY = """## Learning Objectives
@@ -129,7 +129,9 @@ class LessonLifecycleTests(unittest.TestCase):
             (self.vault / ".study-compiler/learning-state.json").read_text()
         )
         self.assertEqual(state["lessons"]["attention-intuition"]["mastery_score"], 4)
-        manifest = json.loads((self.vault / ".study-compiler/manifest.json").read_text())
+        manifest = json.loads(
+            (self.vault / ".study-compiler/manifest.json").read_text()
+        )
         self.assertNotIn("mastery_score", manifest["sources"][self.source["id"]])
 
     def test_revises_body_while_preserving_staged_provenance(self) -> None:
@@ -176,7 +178,9 @@ class LessonLifecycleTests(unittest.TestCase):
             "[[lessons/attention-intuition|Understanding Attention]]",
             (self.vault / "index.md").read_text(),
         )
-        manifest = json.loads((self.vault / ".study-compiler/manifest.json").read_text())
+        manifest = json.loads(
+            (self.vault / ".study-compiler/manifest.json").read_text()
+        )
         self.assertEqual(manifest["sources"][self.source["id"]]["status"], "integrated")
 
     def test_failed_promotion_keeps_draft_when_provenance_is_corrupt(self) -> None:

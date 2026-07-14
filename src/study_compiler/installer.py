@@ -25,7 +25,7 @@ AGENT_SKILL_DIRECTORIES = {
 AGENT_LABELS = {
     "codex": "Codex",
     "claude": "Claude Code",
-    "agents": "通用 Agents（OpenCode / Aider 等）",
+    "agents": "Shared agents (OpenCode, Aider, and others)",
 }
 
 
@@ -71,8 +71,8 @@ def _read_terminal_key() -> str:
 
 def _selector_lines(cursor: int, selected: set[str]) -> list[str]:
     lines = [
-        "选择要安装 Learning Wiki Skills 的 Agent",
-        "↑/↓ 移动  空格选择  Enter 确认",
+        "Select where to install Study Compiler skills",
+        "↑/↓ Move  Space Toggle  Enter Confirm",
         "",
     ]
     for index, name in enumerate(AGENT_SKILL_DIRECTORIES):
@@ -127,7 +127,7 @@ def locate_bundled_skills() -> Path:
     """Find skills in a source checkout or an installed Python environment."""
     candidates = (
         Path(__file__).resolve().parents[2] / "skills",
-        Path(sys.prefix) / "share/learning-wiki/skills",
+        Path(sys.prefix) / "share/study-compiler/skills",
     )
     for candidate in candidates:
         if all((candidate / name / "SKILL.md").is_file() for name in SKILL_NAMES):
@@ -172,18 +172,23 @@ def _target_label(path: str) -> str:
     for name, relative in AGENT_SKILL_DIRECTORIES.items():
         if normalized.endswith(f"/{relative}"):
             return AGENT_LABELS[name]
-    return "自定义 Agent"
+    return "Custom agent"
 
 
 def format_setup_summary(result: dict[str, object]) -> str:
-    lines = ["", "✅ Learning Wiki 已准备好", ""]
-    vault = result.get("vault")
-    if isinstance(vault, dict):
-        state = "已创建" if vault.get("created") else "已存在"
-        lines.append(f"  学习库  {_display_path(str(vault['vault']))}（{state}）")
+    lines = ["", "✓ Study Compiler is ready", ""]
+    workspace = result.get("workspace")
+    if isinstance(workspace, dict):
+        if workspace.get("migrated"):
+            state = "migrated from Learning Wiki"
+        else:
+            state = "created" if workspace.get("created") else "already exists"
+        lines.append(
+            f"  Workspace  {_display_path(str(workspace['workspace']))} ({state})"
+        )
     else:
-        lines.append("  学习库  未创建（稍后可运行 learning-wiki init）")
-    lines.extend(["  Skills  5 个 Skills 已就绪", "", "  安装位置"])
+        lines.append("  Workspace  not created (run study-compiler init later)")
+    lines.extend(["  Skills     5 skills ready", "", "  Installed for"])
     targets = result.get("targets", [])
     if isinstance(targets, list):
         for report in targets:
@@ -194,8 +199,8 @@ def format_setup_summary(result: dict[str, object]) -> str:
     lines.extend(
         [
             "",
-            "下一步：重启所选 Agent，然后说：",
-            "  使用 $learning-ingest 导入这篇论文或网页。",
+            "Next: restart the selected agent, then ask:",
+            "  Use $learning-ingest to import this paper or webpage.",
         ]
     )
     return "\n".join(lines)
@@ -224,6 +229,14 @@ def _is_unchanged(source: Path, destination: Path, *, copy: bool) -> bool:
     if copy:
         return _directories_match(source, destination)
     return destination.is_symlink() and destination.resolve() == source.resolve()
+
+
+def _is_legacy_managed_link(destination: Path) -> bool:
+    if not destination.is_symlink():
+        return False
+    return "/learning-wiki/share/learning-wiki/skills/" in (
+        destination.resolve().as_posix()
+    )
 
 
 def install_skills(
@@ -255,12 +268,15 @@ def install_skills(
             if _is_unchanged(source, destination, copy=copy):
                 actions.append((source, destination, "unchanged"))
             elif destination.exists() or destination.is_symlink():
-                if not force:
+                if _is_legacy_managed_link(destination):
+                    actions.append((source, destination, "replace"))
+                elif not force:
                     raise StateError(
                         f"Skill already exists and was preserved: {destination}; "
                         "rerun with --force to replace it"
                     )
-                actions.append((source, destination, "replace"))
+                else:
+                    actions.append((source, destination, "replace"))
             else:
                 actions.append((source, destination, "install"))
 
