@@ -16,7 +16,7 @@
 
 ## Task 3: Lesson lifecycle
 
-- [ ] Validate and stage lessons, append recall records, and approval-gate promotion.
+- [x] Validate and stage lessons, append recall records, and approval-gate promotion.
 - Acceptance: required pedagogy and provenance enforced; state/index/log updated.
 - Verify: lesson integration tests.
 - Dependencies: Tasks 1–2.
