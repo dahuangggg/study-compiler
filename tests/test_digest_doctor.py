@@ -96,6 +96,33 @@ class DigestAndDoctorTests(unittest.TestCase):
         self.assertFalse(report["ok"])
         self.assertTrue(any("hash drift" in error for error in report["errors"]))
 
+    def test_doctor_detects_missing_snapshot_and_unknown_lesson_source(self) -> None:
+        source = add_snippet(
+            self.vault, title="Lesson", text="Attention uses context."
+        )["source"]
+        create_draft(
+            self.vault,
+            slug="attention",
+            title="Attention",
+            source_ids=[source["id"]],
+            body=VALID_BODY,
+        )
+        promote_draft(self.vault, "attention", approve=True)
+        (self.vault / source["snapshot"]).unlink()
+        lesson_path = self.vault / "lessons/attention.md"
+        lesson_path.write_text(
+            lesson_path.read_text().replace(source["id"], "chat-unknown0000000"),
+            encoding="utf-8",
+        )
+
+        report = inspect_vault(self.vault)
+
+        self.assertFalse(report["ok"])
+        self.assertTrue(
+            any("snapshot is missing" in error for error in report["errors"])
+        )
+        self.assertTrue(any("unknown source ID" in error for error in report["errors"]))
+
     def test_doctor_reports_malformed_state_without_crashing(self) -> None:
         (self.vault / ".learning-wiki/learning-state.json").write_text(
             "{broken", encoding="utf-8"
