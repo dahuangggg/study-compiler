@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 from pathlib import Path
-from typing import Sequence
+from typing import Iterator, Sequence, TextIO
 
 from .errors import StateError
 
@@ -20,6 +21,106 @@ AGENT_SKILL_DIRECTORIES = {
     "claude": ".claude/skills",
     "agents": ".agents/skills",
 }
+
+AGENT_LABELS = {
+    "codex": "Codex",
+    "claude": "Claude Code",
+    "agents": "通用 Agents（OpenCode / Aider 等）",
+}
+
+
+def detect_agent_names(*, home: Path | None = None) -> list[str]:
+    resolved_home = (home or Path.home()).expanduser().resolve()
+    detected = [
+        name
+        for name, relative in AGENT_SKILL_DIRECTORIES.items()
+        if (resolved_home / Path(relative).parent).is_dir()
+    ]
+    return detected or ["codex"]
+
+
+def _read_terminal_key() -> str:
+    if os.name == "nt":  # pragma: no cover - exercised on Windows
+        import msvcrt
+
+        key = msvcrt.getwch()
+        if key in {"\x00", "\xe0"}:
+            return {"H": "up", "P": "down"}.get(msvcrt.getwch(), "other")
+    else:
+        import termios
+        import tty
+
+        descriptor = sys.stdin.fileno()
+        previous = termios.tcgetattr(descriptor)
+        try:
+            tty.setraw(descriptor)
+            key = sys.stdin.read(1)
+            if key == "\x1b":
+                sequence = sys.stdin.read(2)
+                return {"[A": "up", "[B": "down"}.get(sequence, "other")
+        finally:
+            termios.tcsetattr(descriptor, termios.TCSADRAIN, previous)
+    if key in {"\r", "\n"}:
+        return "enter"
+    if key == " ":
+        return "space"
+    if key == "\x03":
+        raise KeyboardInterrupt
+    return "other"
+
+
+def _selector_lines(cursor: int, selected: set[str]) -> list[str]:
+    lines = [
+        "选择要安装 Learning Wiki Skills 的 Agent",
+        "↑/↓ 移动  空格选择  Enter 确认",
+        "",
+    ]
+    for index, name in enumerate(AGENT_SKILL_DIRECTORIES):
+        pointer = "›" if index == cursor else " "
+        checkbox = "●" if name in selected else "○"
+        lines.append(f" {pointer} {checkbox} {AGENT_LABELS[name]}")
+    return lines
+
+
+def choose_agent_names(
+    detected: Sequence[str],
+    *,
+    keys: Iterator[str] | None = None,
+    output: TextIO | None = None,
+) -> list[str]:
+    """Run a dependency-free terminal multi-select and return Agent names."""
+    stream = output or sys.stdout
+    selected = set(detected) & set(AGENT_SKILL_DIRECTORIES)
+    if not selected:
+        selected.add("codex")
+    cursor = 0
+    key_source = keys
+    rendered_lines = 0
+
+    while True:
+        lines = _selector_lines(cursor, selected)
+        if rendered_lines:
+            stream.write(f"\x1b[{rendered_lines}A")
+        for line in lines:
+            stream.write(f"\r\x1b[2K{line}\n")
+        stream.flush()
+        rendered_lines = len(lines)
+
+        try:
+            key = next(key_source) if key_source is not None else _read_terminal_key()
+        except StopIteration as error:
+            raise StateError("Agent selection ended before confirmation") from error
+        if key == "up":
+            cursor = (cursor - 1) % len(AGENT_SKILL_DIRECTORIES)
+        elif key == "down":
+            cursor = (cursor + 1) % len(AGENT_SKILL_DIRECTORIES)
+        elif key == "space":
+            name = tuple(AGENT_SKILL_DIRECTORIES)[cursor]
+            selected.symmetric_difference_update({name})
+        elif key == "enter" and selected:
+            stream.write("\n")
+            stream.flush()
+            return [name for name in AGENT_SKILL_DIRECTORIES if name in selected]
 
 
 def locate_bundled_skills() -> Path:
@@ -48,13 +149,7 @@ def resolve_skill_targets(
     if "all" in requested:
         requested = list(AGENT_SKILL_DIRECTORIES)
     if "auto" in requested or (not requested and not custom_targets):
-        names.extend(
-            name
-            for name, relative in AGENT_SKILL_DIRECTORIES.items()
-            if (resolved_home / Path(relative).parent).is_dir()
-        )
-        if not names:
-            names.append("codex")
+        names.extend(detect_agent_names(home=resolved_home))
     names.extend(name for name in requested if name not in {"all", "auto"})
 
     targets = [path.expanduser().resolve() for path in custom_targets]
@@ -62,6 +157,48 @@ def resolve_skill_targets(
         (resolved_home / AGENT_SKILL_DIRECTORIES[name]).resolve() for name in names
     )
     return list(dict.fromkeys(targets))
+
+
+def _display_path(path: str) -> str:
+    resolved = Path(path)
+    try:
+        return f"~/{resolved.relative_to(Path.home()).as_posix()}"
+    except ValueError:
+        return str(resolved)
+
+
+def _target_label(path: str) -> str:
+    normalized = Path(path).as_posix()
+    for name, relative in AGENT_SKILL_DIRECTORIES.items():
+        if normalized.endswith(f"/{relative}"):
+            return AGENT_LABELS[name]
+    return "自定义 Agent"
+
+
+def format_setup_summary(result: dict[str, object]) -> str:
+    lines = ["", "✅ Learning Wiki 已准备好", ""]
+    vault = result.get("vault")
+    if isinstance(vault, dict):
+        state = "已创建" if vault.get("created") else "已存在"
+        lines.append(f"  学习库  {_display_path(str(vault['vault']))}（{state}）")
+    else:
+        lines.append("  学习库  未创建（稍后可运行 learning-wiki init）")
+    lines.extend(["  Skills  5 个 Skills 已就绪", "", "  安装位置"])
+    targets = result.get("targets", [])
+    if isinstance(targets, list):
+        for report in targets:
+            if not isinstance(report, dict):
+                continue
+            path = str(report["path"])
+            lines.append(f"  - {_target_label(path)}  {_display_path(path)}")
+    lines.extend(
+        [
+            "",
+            "下一步：重启所选 Agent，然后说：",
+            "  使用 $learning-ingest 导入这篇论文或网页。",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def _directories_match(source: Path, destination: Path) -> bool:

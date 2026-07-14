@@ -4,10 +4,11 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from io import StringIO
 from pathlib import Path
 
 from learning_wiki.errors import StateError
-from learning_wiki.installer import SKILL_NAMES, install_skills
+from learning_wiki.installer import SKILL_NAMES, choose_agent_names, install_skills
 
 
 class SkillInstallerTests(unittest.TestCase):
@@ -67,6 +68,20 @@ class SkillInstallerTests(unittest.TestCase):
         self.assertEqual(changed.read_text(encoding="utf-8"), f"# {SKILL_NAMES[0]}\n")
         self.assertIn(SKILL_NAMES[0], result[0]["installed"])
 
+    def test_agent_selector_supports_arrow_navigation_and_space_toggle(self) -> None:
+        output = StringIO()
+
+        selected = choose_agent_names(
+            ["codex"],
+            keys=iter(["down", "space", "enter"]),
+            output=output,
+        )
+
+        self.assertEqual(selected, ["codex", "claude"])
+        self.assertIn("↑/↓", output.getvalue())
+        self.assertIn("Codex", output.getvalue())
+        self.assertIn("Claude Code", output.getvalue())
+
 
 class SetupCommandTests(unittest.TestCase):
     def test_one_command_installer_works_in_an_isolated_home(self) -> None:
@@ -103,8 +118,13 @@ class SetupCommandTests(unittest.TestCase):
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            payload = json.loads(completed.stdout.splitlines()[-1])
-            self.assertEqual(payload["vault"]["vault"], str(vault.resolve()))
+            self.assertIn("Learning Wiki 已准备好", completed.stdout)
+            self.assertIn(str(vault.resolve()), completed.stdout)
+            self.assertNotIn('{"targets":', completed.stdout)
+            combined_output = completed.stdout + completed.stderr
+            self.assertNotIn("Resolved 1 package", combined_output)
+            self.assertNotIn("Prepared 1 package", combined_output)
+            self.assertNotIn("learning-wiki==", combined_output)
             self.assertTrue((root / "bin/learning-wiki").exists())
             for name in SKILL_NAMES:
                 installed = home / ".codex/skills" / name
@@ -130,7 +150,7 @@ class SetupCommandTests(unittest.TestCase):
             self.assertIn("./install.sh --vault", completed.stdout)
             self.assertFalse((Path(temp_dir) / ".codex").exists())
 
-    def test_setup_initializes_vault_and_installs_all_bundled_skills(self) -> None:
+    def test_setup_prints_human_readable_summary_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             vault = root / "Learn"
@@ -146,13 +166,35 @@ class SetupCommandTests(unittest.TestCase):
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            payload = json.loads(completed.stdout)
-            self.assertEqual(payload["vault"]["vault"], str(vault.resolve()))
-            self.assertEqual(payload["targets"][0]["installed"], list(SKILL_NAMES))
+            self.assertIn("Learning Wiki 已准备好", completed.stdout)
+            self.assertIn("5 个 Skills", completed.stdout)
+            self.assertIn(str(vault.resolve()), completed.stdout)
+            self.assertNotIn('{"targets":', completed.stdout)
             self.assertTrue((vault / ".learning-wiki/manifest.json").is_file())
             for name in SKILL_NAMES:
                 self.assertTrue((target / name / "SKILL.md").is_file())
                 self.assertFalse((target / name).is_symlink())
+
+    def test_setup_json_flag_keeps_machine_readable_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            vault = root / "Learn"
+            target = root / "agent-skills"
+
+            completed = self.run_cli(
+                "setup",
+                "--vault",
+                str(vault),
+                "--target",
+                str(target),
+                "--copy",
+                "--json",
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            payload = json.loads(completed.stdout)
+            self.assertEqual(payload["vault"]["vault"], str(vault.resolve()))
+            self.assertEqual(payload["targets"][0]["installed"], list(SKILL_NAMES))
 
     def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
         project_root = Path(__file__).resolve().parents[1]
