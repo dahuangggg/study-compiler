@@ -10,7 +10,7 @@ from .errors import LearningWikiError, ValidationError
 from .digest import build_digest
 from .doctor import inspect_vault
 from .lessons import create_draft, list_drafts, promote_draft, record_recall
-from .sources import add_local_source, add_snippet, add_url_source, list_sources
+from .sources import add_local_source, add_snippet, add_url_source, attach_web_snapshot, list_sources
 from .storage import initialize_vault
 
 
@@ -44,6 +44,13 @@ def build_parser() -> argparse.ArgumentParser:
     snippet_input = source_snippet.add_mutually_exclusive_group(required=True)
     snippet_input.add_argument("--text")
     snippet_input.add_argument("--from-file", type=Path)
+
+    source_web_snapshot = source_commands.add_parser(
+        "snapshot-web", help="attach an Agent-fetched snapshot to a web source"
+    )
+    source_web_snapshot.add_argument("vault", type=Path)
+    source_web_snapshot.add_argument("source_id")
+    source_web_snapshot.add_argument("path", type=Path)
 
     source_list = source_commands.add_parser("list", help="list registered sources")
     source_list.add_argument("vault", type=Path)
@@ -107,6 +114,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.from_file is not None:
                 text = _read_text_file(args.from_file, "snippet file")
             result = add_snippet(args.vault, title=args.title, text=text, kind=args.kind)
+        elif args.command == "source" and args.source_command == "snapshot-web":
+            result = attach_web_snapshot(args.vault, args.source_id, args.path)
         elif args.command == "source" and args.source_command == "list":
             sources = list_sources(args.vault)
             if not args.json:

@@ -10,6 +10,7 @@ from learning_wiki.sources import (
     add_local_source,
     add_snippet,
     add_url_source,
+    attach_web_snapshot,
     list_sources,
 )
 from learning_wiki.storage import initialize_vault
@@ -69,6 +70,25 @@ class SourceRegistryTests(unittest.TestCase):
             self.assertEqual(source["kind"], "web")
             self.assertEqual(len(list_sources(vault)), 1)
 
+    def test_attaches_agent_fetched_snapshot_to_registered_web_source(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            vault = root / "Learn"
+            snapshot_input = root / "article.md"
+            snapshot_input.write_text("# Article\n\nA grounded explanation.", encoding="utf-8")
+            initialize_vault(vault)
+            source = add_url_source(vault, "https://example.com/article")["source"]
+
+            result = attach_web_snapshot(vault, source["id"], snapshot_input)
+
+            attached = result["source"]
+            snapshot = vault / attached["snapshot"]
+            self.assertEqual(snapshot.read_text(), snapshot_input.read_text())
+            self.assertEqual(attached["status"], "new")
+            self.assertEqual(attached["reference_sha256"], source["sha256"])
+            self.assertEqual(attached["sha256"], hashlib.sha256(snapshot_input.read_bytes()).hexdigest())
+            self.assertEqual(stat.S_IMODE(snapshot.stat().st_mode), 0o444)
+
     def test_rejects_unsafe_web_targets(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             vault = Path(temp_dir) / "Learn"
@@ -108,4 +128,3 @@ class SourceRegistryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -176,6 +176,47 @@ def add_url_source(vault: Path, url: str, *, title: str | None = None) -> dict[s
     return _record_source(root, manifest, record)
 
 
+def attach_web_snapshot(
+    vault: Path,
+    source_id: str,
+    snapshot_path: Path,
+    *,
+    max_bytes: int = DEFAULT_MAX_BYTES,
+) -> dict[str, Any]:
+    root = require_vault(vault)
+    manifest = _load_manifest(root)
+    source = manifest["sources"].get(source_id)
+    if source is None:
+        raise ValidationError(f"unknown source ID: {source_id}")
+    if source.get("kind") != "web":
+        raise ValidationError(f"source is not a web reference: {source_id}")
+    if source.get("snapshot") is not None:
+        raise StateError(f"web source already has a snapshot: {source_id}")
+    path = snapshot_path.expanduser().resolve()
+    if not path.is_file():
+        raise ValidationError(f"snapshot is not a regular file: {path}")
+    size = path.stat().st_size
+    if size > max_bytes:
+        raise ValidationError(f"source exceeds {max_bytes} byte limit")
+    with path.open("rb") as handle:
+        digest = _hash_stream(handle)
+    suffix = path.suffix.lower() if path.suffix.lower() in {".html", ".md", ".txt"} else ".txt"
+    destination = safe_child(root, "sources", source_id, f"snapshot{suffix}")
+    shutil.copyfile(path, destination)
+    destination.chmod(0o444)
+    source["reference_sha256"] = source["sha256"]
+    source["sha256"] = digest
+    source["size"] = size
+    source["snapshot"] = _relative(destination, root)
+    source["media_type"] = mimetypes.guess_type(destination.name)[0] or "text/plain"
+    source["snapshot_at"] = utc_now()
+    write_json(root / "sources" / source_id / "metadata.json", source)
+    write_json(_manifest_path(root), manifest)
+    with (root / "log.md").open("a", encoding="utf-8") as log:
+        log.write(f"- {source['snapshot_at']} WEB_SNAPSHOT id={source_id}\n")
+    return {"source": source}
+
+
 def add_snippet(
     vault: Path,
     *,
@@ -232,4 +273,3 @@ def list_sources(vault: Path) -> list[dict[str, Any]]:
     root = require_vault(vault)
     manifest = _load_manifest(root)
     return sorted(manifest["sources"].values(), key=lambda item: (item["imported_at"], item["id"]))
-

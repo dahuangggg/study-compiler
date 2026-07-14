@@ -31,6 +31,7 @@ The first user is the project owner. The design must remain portable enough to b
 learning-wiki init VAULT
 learning-wiki source add VAULT PATH --kind paper|document|chat [--title TITLE]
 learning-wiki source add-url VAULT URL [--title TITLE]
+learning-wiki source snapshot-web VAULT SOURCE_ID PATH
 learning-wiki source add-snippet VAULT --kind chat --title TITLE (--text TEXT | --from-file PATH)
 learning-wiki source list VAULT [--json]
 learning-wiki draft create VAULT --slug SLUG --title TITLE --source SOURCE_ID... --content-file PATH
@@ -114,4 +115,3 @@ The Agent may add prerequisites, counterexamples, equations, exercises, or misco
 ## Success criteria
 
 The executable acceptance criteria are defined in `docs/acceptance.md`. The MVP is complete only when every criterion is backed by a test or a recorded runtime check.
-

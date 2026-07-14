@@ -14,7 +14,7 @@
 ## C. Three source types
 
 - [ ] A local paper/document is copied into an immutable source snapshot and hashed.
-- [ ] An HTTPS web URL is registered without the CLI fetching it.
+- [ ] An HTTPS web URL is registered without the CLI fetching it, then accepts an Agent-fetched immutable snapshot.
 - [ ] A chat excerpt is saved as an immutable source snapshot.
 - [ ] Duplicate content is detected and returns the existing source ID.
 - [ ] Unsafe URL schemes, private IP literals, oversized files, and escaping paths are rejected.
