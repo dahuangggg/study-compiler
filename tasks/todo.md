@@ -23,7 +23,7 @@
 
 ## Task 4: Digest and doctor
 
-- [ ] Generate periodic learning agendas and validate the entire vault.
+- [x] Generate periodic learning agendas and validate the entire vault.
 - Acceptance: due/weak/pending items appear; corruption is reported deterministically.
 - Verify: digest/doctor tests and JSON CLI output.
 - Dependencies: Tasks 1–3.

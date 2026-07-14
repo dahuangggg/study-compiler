@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Sequence
 
 from .errors import LearningWikiError, ValidationError
+from .digest import build_digest
+from .doctor import inspect_vault
 from .lessons import create_draft, list_drafts, promote_draft, record_recall
 from .sources import add_local_source, add_snippet, add_url_source, list_sources
 from .storage import initialize_vault
@@ -70,6 +72,16 @@ def build_parser() -> argparse.ArgumentParser:
     recall_record.add_argument("slug")
     recall_record.add_argument("--score", type=int, choices=range(1, 6), required=True)
     recall_record.add_argument("--retelling-file", type=Path, required=True)
+
+    digest = subcommands.add_parser("digest", help="build periodic learning agendas")
+    digest_commands = digest.add_subparsers(dest="digest_command", required=True)
+    digest_build = digest_commands.add_parser("build", help="build a staged learning agenda")
+    digest_build.add_argument("vault", type=Path)
+    digest_build.add_argument("--period", choices=("daily", "weekly", "monthly"), default="weekly")
+
+    doctor = subcommands.add_parser("doctor", help="validate all vault invariants")
+    doctor.add_argument("vault", type=Path)
+    doctor.add_argument("--json", action="store_true")
     return parser
 
 
@@ -126,6 +138,20 @@ def main(argv: Sequence[str] | None = None) -> int:
                 score=args.score,
                 retelling=_read_text_file(args.retelling_file, "retelling file"),
             )
+        elif args.command == "digest" and args.digest_command == "build":
+            result = build_digest(args.vault, period=args.period)
+        elif args.command == "doctor":
+            result = inspect_vault(args.vault)
+            if args.json:
+                print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            else:
+                status = "PASS" if result["ok"] else "FAIL"
+                print(f"Learning Wiki doctor: {status}")
+                for error in result["errors"]:
+                    print(f"error: {error}")
+                for warning in result["warnings"]:
+                    print(f"warning: {warning}")
+            return 0 if result["ok"] else 1
         else:  # pragma: no cover - argparse owns command validation
             parser.error("unknown command")
             return 2

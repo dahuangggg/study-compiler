@@ -213,7 +213,7 @@ def record_recall(
     return record | {"can_explain": score >= 4}
 
 
-def _rebuild_index(vault: Path) -> None:
+def render_index(vault: Path) -> str:
     entries: list[tuple[str, str]] = []
     for path in sorted((vault / "lessons").glob("*.md")):
         metadata, _ = parse_lesson(path.read_text(encoding="utf-8"))
@@ -223,7 +223,11 @@ def _rebuild_index(vault: Path) -> None:
         lines.extend(f"- [[lessons/{slug}|{title}]]" for slug, title in entries)
     else:
         lines.append("No approved lessons yet.")
-    (vault / "index.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return "\n".join(lines) + "\n"
+
+
+def _rebuild_index(vault: Path) -> None:
+    (vault / "index.md").write_text(render_index(vault), encoding="utf-8")
 
 
 def promote_draft(vault: Path, slug: str, *, approve: bool) -> dict[str, Any]:
@@ -259,4 +263,3 @@ def promote_draft(vault: Path, slug: str, *, approve: bool) -> dict[str, Any]:
     with (root / "log.md").open("a", encoding="utf-8") as log:
         log.write(f"- {timestamp} DRAFT_PROMOTE slug={slug}\n")
     return {"path": destination.relative_to(root).as_posix(), "slug": slug, "status": "approved"}
-
