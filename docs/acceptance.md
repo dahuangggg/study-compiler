@@ -50,10 +50,9 @@
 ## Verification commands
 
 ```bash
-python -m unittest discover -s tests -v
-PYTHONPATH=src python -m learning_wiki --help
-PYTHONPATH=src python -m learning_wiki doctor <acceptance-vault> --json
+python3 -m unittest discover -s tests -v
+PYTHONPATH=src python3 -m learning_wiki --help
+PYTHONPATH=src python3 -m learning_wiki doctor <acceptance-vault> --json
 git status --short
 git remote -v
 ```
-

@@ -2,7 +2,7 @@
 
 ## Task 1: Vault foundation
 
-- [ ] Create package entrypoint, error contract, vault layout, and safe persistence.
+- [x] Create package entrypoint, error contract, vault layout, and safe persistence.
 - Acceptance: init is idempotent; state schemas are valid; writes cannot escape the vault.
 - Verify: targeted unit and integration tests.
 - Dependencies: none.
@@ -41,4 +41,3 @@
 - Acceptance: all criteria have current evidence; no remote/fork relationship exists.
 - Verify: full test suite, runtime fixture, doctor, Git inspection.
 - Dependencies: all prior tasks.
-

@@ -13,10 +13,10 @@ Learning Wiki turns papers, web pages, and agent-chat excerpts into staged, huma
 
 ## Commands
 
-- Test: `python -m unittest discover -s tests -v`
-- CLI help: `PYTHONPATH=src python -m learning_wiki --help`
-- Validate a vault: `PYTHONPATH=src python -m learning_wiki doctor <vault>`
-- Build package: `python -m build` when the optional `build` package is available
+- Test: `python3 -m unittest discover -s tests -v`
+- CLI help: `PYTHONPATH=src python3 -m learning_wiki --help`
+- Validate a vault: `PYTHONPATH=src python3 -m learning_wiki doctor <vault>`
+- Build package: `python3 -m build` when the optional `build` package is available
 
 ## Product invariants
 
@@ -49,4 +49,3 @@ def require_slug(value: str) -> str:
 - Ask before adding runtime dependencies, remote model APIs, background daemons, or destructive migrations.
 - Never fetch arbitrary URLs from the deterministic CLI, execute source text, overwrite raw sources, or promote without approval.
 - Never commit `.env`, credentials, generated vaults, or local source material.
-

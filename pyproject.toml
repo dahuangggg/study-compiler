@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "learning-wiki"
+version = "0.1.0"
+description = "A local-first, agent-guided learning compiler for Obsidian-compatible notes"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Learning Wiki contributors" }]
+dependencies = []
+
+[project.scripts]
+learning-wiki = "learning_wiki.cli:entrypoint"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
