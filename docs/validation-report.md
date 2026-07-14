@@ -15,8 +15,9 @@
 | Periodic learning output exists | PASS | Daily/weekly/monthly agenda command and `learning-digest` Skill prioritize new, staged, weak, and due items |
 | Integrity failures are detected | PASS | Tests cover malformed state, missing snapshots, hash drift, invalid drafts, unknown source IDs, path escape, stale index, and promotion preflight |
 | Agent Skills are structurally valid | PASS | `quick_validate.py` passed for all five Skills using an isolated PyYAML environment |
-| Automatic installation works | PASS | Isolated-home test installs the CLI, copies all five Skills into Codex, initializes a vault, and verifies help has no side effects |
-| Runtime and packaging work | PASS | 30 tests passed; Ruff check/format passed; wheel contains all ten Skill files and installs into a clean environment |
+| Automatic installation works | PASS | Isolated-home test installs the CLI and all five Skills without uv build noise; PTY verification selects Codex with arrow keys and initializes a vault |
+| Human and machine output modes work | PASS | Setup defaults to a concise Chinese summary; `--json` retains the stable structured response for Agents and scripts |
+| Runtime and packaging work | PASS | 32 tests passed; Ruff check/format passed; wheel contains all ten Skill files and installs into a clean environment |
 | Real vertical acceptance flow works | PASS | `acceptance-vault` completed init, source, draft, recall, approval, digest, and doctor with `ok=true`, zero errors, and zero warnings |
 | No unfinished placeholders or exposed credentials | PASS | Repository scans found no TODO/FIXME placeholders or credential-like assignments |
 

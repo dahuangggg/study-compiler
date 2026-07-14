@@ -28,7 +28,7 @@ The first user is the project owner. The design must remain portable enough to b
 ## Public CLI contract
 
 ```text
-learning-wiki setup [--vault VAULT] [--agent auto|codex|claude|agents|all]... [--target PATH]... [--copy] [--force]
+learning-wiki setup [--vault VAULT] [--agent auto|codex|claude|agents|all]... [--target PATH]... [--copy] [--force] [--json]
 learning-wiki init VAULT
 learning-wiki source add VAULT PATH --kind paper|document|chat [--title TITLE]
 learning-wiki source add-url VAULT URL [--title TITLE]
@@ -46,7 +46,9 @@ learning-wiki doctor VAULT [--json]
 
 `setup` installs the five bundled Agent Skills and optionally initializes the
 vault. Installation is idempotent and preserves conflicting existing Skills
-unless the user explicitly passes `--force`.
+unless the user explicitly passes `--force`. When no target flag is supplied in
+an interactive terminal, it presents an arrow-key multi-select. Human-readable
+output is the default; `--json` preserves the machine-readable contract.
 
 All command failures use exit code `2` for invalid user input/state and print `error: <message>` to stderr. Successful mutating commands print a compact JSON object so Agents can consume them reliably.
 

@@ -32,10 +32,19 @@ cd ~/Github/learning-wiki
 ```
 
 The installer uses `uv` when available and otherwise creates an isolated Python
-virtual environment. By default, it detects Codex (`~/.codex/skills`), Claude
-Code (`~/.claude/skills`), and the shared Agent directory (`~/.agents/skills`).
-If none exists, it selects Codex. Restart the Agent after installation so it
-reloads the Skills.
+virtual environment. In an interactive terminal it opens a multi-select menu:
+
+```text
+选择要安装 Learning Wiki Skills 的 Agent
+↑/↓ 移动  空格选择  Enter 确认
+
+ › ● Codex
+   ○ Claude Code
+   ○ 通用 Agents（OpenCode / Aider 等）
+```
+
+Detected Agents start selected. Restart the selected Agent after installation
+so it reloads the Skills.
 
 Useful variants:
 
@@ -54,6 +63,9 @@ If the CLI is already installed, the equivalent setup command is:
 ```bash
 learning-wiki setup --agent auto --vault ~/Documents/MyLearning
 ```
+
+`setup` prints a concise human-readable summary by default. Automation can keep
+the stable machine-readable response with `learning-wiki setup ... --json`.
 
 ## Quick start
 

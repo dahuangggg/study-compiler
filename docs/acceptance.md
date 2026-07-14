@@ -15,6 +15,8 @@
 
 - [x] `./install.sh --vault <path>` installs the CLI, all five Skills, and initializes the vault.
 - [x] Agent skill directories can be auto-detected or selected explicitly for Codex, Claude, shared Agents, or a custom target.
+- [x] Interactive installation supports arrow-key navigation, space to toggle, and Enter to confirm Agent targets.
+- [x] Human-readable output is the default while `--json` remains available for Agents and scripts.
 - [x] Re-running installation is idempotent; conflicting existing Skills are preserved unless `--force` is explicit.
 - [x] A built wheel contains all Skill instruction and Agent metadata files.
 
