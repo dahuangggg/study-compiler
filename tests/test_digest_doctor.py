@@ -135,6 +135,28 @@ class DigestAndDoctorTests(unittest.TestCase):
             any("learning-state.json" in error for error in report["errors"])
         )
 
+    def test_doctor_detects_invalid_staged_lesson(self) -> None:
+        source = add_snippet(
+            self.vault, title="Lesson", text="Attention uses context."
+        )["source"]
+        create_draft(
+            self.vault,
+            slug="attention",
+            title="Attention",
+            source_ids=[source["id"]],
+            body=VALID_BODY,
+        )
+        staged = self.vault / "_staging/lessons/attention.md"
+        staged.write_text(
+            staged.read_text().replace("## Example", "## Missing Example"),
+            encoding="utf-8",
+        )
+
+        report = inspect_vault(self.vault)
+
+        self.assertFalse(report["ok"])
+        self.assertTrue(any("invalid lesson" in error for error in report["errors"]))
+
     def test_doctor_detects_path_escape_and_stale_index(self) -> None:
         source = add_snippet(
             self.vault, title="Lesson", text="Attention uses context."
