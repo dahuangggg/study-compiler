@@ -1,0 +1,4 @@
+interface:
+  display_name: "Learning Digest"
+  short_description: "Plan a focused human-readable learning session"
+  default_prompt: "Use $learning-digest to turn the current agenda into a focused learning plan."

@@ -30,7 +30,7 @@
 
 ## Task 5: Agent Skills
 
-- [ ] Add five Skills that follow the CLI contract and trust boundary.
+- [x] Add five Skills that follow the CLI contract and trust boundary.
 - Acceptance: source-to-lesson, recall revision, promotion, and periodic guidance are fully instructed.
 - Verify: structural Skill checks and manual contract review.
 - Dependencies: Tasks 1–4.

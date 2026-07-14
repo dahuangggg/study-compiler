@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lesson Draft"
+  short_description: "Turn registered sources into teachable lesson drafts"
+  default_prompt: "Use $lesson-draft to teach this source with examples and a recall prompt."

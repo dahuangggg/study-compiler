@@ -1,0 +1,4 @@
+interface:
+  display_name: "Recall Review"
+  short_description: "Diagnose a learner retelling and improve the lesson"
+  default_prompt: "Use $recall-review to assess my retelling and revise the staged lesson."

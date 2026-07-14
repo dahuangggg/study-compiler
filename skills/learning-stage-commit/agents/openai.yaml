@@ -1,0 +1,4 @@
+interface:
+  display_name: "Learning Stage Commit"
+  short_description: "Review and explicitly approve staged learning notes"
+  default_prompt: "Use $learning-stage-commit to review staged lessons before promotion."

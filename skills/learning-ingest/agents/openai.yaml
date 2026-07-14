@@ -1,0 +1,4 @@
+interface:
+  display_name: "Learning Ingest"
+  short_description: "Register and prepare trustworthy learning sources"
+  default_prompt: "Use $learning-ingest to register this material and prepare it for learning."
