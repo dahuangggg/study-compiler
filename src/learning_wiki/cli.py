@@ -9,7 +9,7 @@ from typing import Sequence
 from .errors import LearningWikiError, ValidationError
 from .digest import build_digest
 from .doctor import inspect_vault
-from .lessons import create_draft, list_drafts, promote_draft, record_recall
+from .lessons import create_draft, list_drafts, promote_draft, record_recall, revise_draft
 from .sources import add_local_source, add_snippet, add_url_source, attach_web_snapshot, list_sources
 from .storage import initialize_vault
 
@@ -67,6 +67,10 @@ def build_parser() -> argparse.ArgumentParser:
     draft_list = draft_commands.add_parser("list", help="list staged lessons")
     draft_list.add_argument("vault", type=Path)
     draft_list.add_argument("--json", action="store_true")
+    draft_revise = draft_commands.add_parser("revise", help="replace and revalidate a staged lesson body")
+    draft_revise.add_argument("vault", type=Path)
+    draft_revise.add_argument("slug")
+    draft_revise.add_argument("--content-file", type=Path, required=True)
     draft_promote = draft_commands.add_parser("promote", help="approve and promote a lesson")
     draft_promote.add_argument("vault", type=Path)
     draft_promote.add_argument("slug")
@@ -138,6 +142,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                     print(f"{draft['slug']}\t{draft['title']}")
                 return 0
             result = {"drafts": drafts}
+        elif args.command == "draft" and args.draft_command == "revise":
+            result = revise_draft(
+                args.vault,
+                args.slug,
+                body=_read_text_file(args.content_file, "lesson content file"),
+            )
         elif args.command == "draft" and args.draft_command == "promote":
             result = promote_draft(args.vault, args.slug, approve=args.approve)
         elif args.command == "recall" and args.recall_command == "record":

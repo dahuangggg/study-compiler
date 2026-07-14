@@ -155,6 +155,22 @@ def list_drafts(vault: Path) -> list[dict[str, Any]]:
     return drafts
 
 
+def revise_draft(vault: Path, slug: str, *, body: str) -> dict[str, Any]:
+    root = require_vault(vault)
+    require_slug(slug)
+    _require_nonempty_sections(body)
+    staged = safe_child(root, "_staging", "lessons", f"{slug}.md")
+    if not staged.is_file():
+        raise StateError(f"staged lesson not found: {slug}")
+    metadata, _ = parse_lesson(staged.read_text(encoding="utf-8"))
+    timestamp = utc_now()
+    metadata["updated"] = timestamp
+    staged.write_text(_render_lesson(metadata, body), encoding="utf-8")
+    with (root / "log.md").open("a", encoding="utf-8") as log:
+        log.write(f"- {timestamp} DRAFT_REVISE slug={slug}\n")
+    return {"path": staged.relative_to(root).as_posix(), "slug": slug, "status": "draft"}
+
+
 def _iso_timestamp(value: datetime) -> str:
     if value.tzinfo is None:
         raise ValidationError("review timestamp must include a timezone")

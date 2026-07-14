@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from learning_wiki.errors import StateError, ValidationError
-from learning_wiki.lessons import create_draft, list_drafts, promote_draft, record_recall
+from learning_wiki.lessons import create_draft, list_drafts, promote_draft, record_recall, revise_draft
 from learning_wiki.sources import add_snippet
 from learning_wiki.storage import initialize_vault
 
@@ -120,6 +120,26 @@ class LessonLifecycleTests(unittest.TestCase):
         manifest = json.loads((self.vault / ".learning-wiki/manifest.json").read_text())
         self.assertNotIn("mastery_score", manifest["sources"][self.source["id"]])
 
+    def test_revises_body_while_preserving_staged_provenance(self) -> None:
+        create_draft(
+            self.vault,
+            slug="attention-intuition",
+            title="Understanding Attention",
+            source_ids=[self.source["id"]],
+            body=VALID_BODY,
+        )
+        revised_body = VALID_BODY.replace(
+            "Attention is like asking every word which other words are useful right now.",
+            "Attention lets each token gather context relevant to its current job.",
+        )
+
+        result = revise_draft(self.vault, "attention-intuition", body=revised_body)
+
+        content = (self.vault / result["path"]).read_text(encoding="utf-8")
+        self.assertIn("gather context relevant", content)
+        self.assertIn(self.source["id"], content)
+        self.assertIn('status: "draft"', content)
+
     def test_requires_approval_then_promotes_and_updates_tracking(self) -> None:
         create_draft(
             self.vault,
@@ -145,4 +165,3 @@ class LessonLifecycleTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

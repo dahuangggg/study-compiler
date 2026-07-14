@@ -36,6 +36,7 @@ learning-wiki source add-snippet VAULT --kind chat --title TITLE (--text TEXT | 
 learning-wiki source list VAULT [--json]
 learning-wiki draft create VAULT --slug SLUG --title TITLE --source SOURCE_ID... --content-file PATH
 learning-wiki draft list VAULT [--json]
+learning-wiki draft revise VAULT SLUG --content-file PATH
 learning-wiki recall record VAULT SLUG --score 1..5 --retelling-file PATH
 learning-wiki draft promote VAULT SLUG --approve
 learning-wiki digest build VAULT [--period daily|weekly|monthly]
