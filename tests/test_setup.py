@@ -69,6 +69,67 @@ class SkillInstallerTests(unittest.TestCase):
 
 
 class SetupCommandTests(unittest.TestCase):
+    def test_one_command_installer_works_in_an_isolated_home(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            home = root / "home"
+            vault = root / "Learn"
+            environment = os.environ.copy()
+            environment.pop("PYTHONPATH", None)
+            environment.update(
+                {
+                    "HOME": str(home),
+                    "LEARNING_WIKI_BIN_DIR": str(root / "bin"),
+                    "LEARNING_WIKI_TOOL_DIR": str(root / "tools"),
+                    "UV_CACHE_DIR": str(root / "uv-cache"),
+                }
+            )
+
+            completed = subprocess.run(
+                [
+                    "bash",
+                    str(project_root / "install.sh"),
+                    "--vault",
+                    str(vault),
+                    "--agent",
+                    "codex",
+                ],
+                cwd=project_root,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            payload = json.loads(completed.stdout.splitlines()[-1])
+            self.assertEqual(payload["vault"]["vault"], str(vault.resolve()))
+            self.assertTrue((root / "bin/learning-wiki").exists())
+            for name in SKILL_NAMES:
+                installed = home / ".codex/skills" / name
+                self.assertTrue(installed.is_symlink())
+                self.assertTrue(
+                    installed.resolve().is_relative_to((root / "tools").resolve())
+                )
+                self.assertTrue((installed / "SKILL.md").is_file())
+
+    def test_one_command_installer_help_does_not_install(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            completed = subprocess.run(
+                ["bash", str(project_root / "install.sh"), "--help"],
+                cwd=project_root,
+                env={**os.environ, "HOME": temp_dir},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("./install.sh --vault", completed.stdout)
+            self.assertFalse((Path(temp_dir) / ".codex").exists())
+
     def test_setup_initializes_vault_and_installs_all_bundled_skills(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

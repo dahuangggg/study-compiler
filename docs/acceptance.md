@@ -11,6 +11,13 @@
 - [x] `learning-wiki init <temp-vault>` creates every documented directory and valid state file.
 - [x] Re-running `init` is safe and does not discard existing data.
 
+## B2. Automatic installation
+
+- [x] `./install.sh --vault <path>` installs the CLI, all five Skills, and initializes the vault.
+- [x] Agent skill directories can be auto-detected or selected explicitly for Codex, Claude, shared Agents, or a custom target.
+- [x] Re-running installation is idempotent; conflicting existing Skills are preserved unless `--force` is explicit.
+- [x] A built wheel contains all Skill instruction and Agent metadata files.
+
 ## C. Three source types
 
 - [x] A local paper/document is copied into an immutable source snapshot and hashed.
@@ -50,6 +57,7 @@
 ## Verification commands
 
 ```bash
+./install.sh --help
 python3 -m unittest discover -s tests -v
 PYTHONPATH=src python3 -m learning_wiki --help
 PYTHONPATH=src python3 -m learning_wiki doctor <acceptance-vault> --json

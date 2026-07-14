@@ -15,7 +15,8 @@
 | Periodic learning output exists | PASS | Daily/weekly/monthly agenda command and `learning-digest` Skill prioritize new, staged, weak, and due items |
 | Integrity failures are detected | PASS | Tests cover malformed state, missing snapshots, hash drift, invalid drafts, unknown source IDs, path escape, stale index, and promotion preflight |
 | Agent Skills are structurally valid | PASS | `quick_validate.py` passed for all five Skills using an isolated PyYAML environment |
-| Runtime and packaging work | PASS | 24 tests passed; Ruff check/format passed; wheel built and installed into a clean virtual environment; installed CLI help executed |
+| Automatic installation works | PASS | Isolated-home test installs the CLI, copies all five Skills into Codex, initializes a vault, and verifies help has no side effects |
+| Runtime and packaging work | PASS | 30 tests passed; Ruff check/format passed; wheel contains all ten Skill files and installs into a clean environment |
 | Real vertical acceptance flow works | PASS | `acceptance-vault` completed init, source, draft, recall, approval, digest, and doctor with `ok=true`, zero errors, and zero warnings |
 | No unfinished placeholders or exposed credentials | PASS | Repository scans found no TODO/FIXME placeholders or credential-like assignments |
 
@@ -27,6 +28,7 @@ Every v0.1 acceptance criterion has direct test or runtime evidence.
 
 ```bash
 PYTHONPATH=src python3 -m unittest discover -s tests -v
+./install.sh --help
 uvx ruff check src tests
 uvx ruff format --check src tests
 uv build
@@ -38,4 +40,3 @@ git rev-list --max-parents=0 HEAD
 ## Product boundary worth noting
 
 The MVP deliberately delegates semantic teaching to Agent Skills and periodic triggering to Codex automation, cron, or another scheduler. It does not bundle a hosted model service, background daemon, multi-user UI, or automatic publishing. Scheduled runs can create staged guidance but cannot approve notes.
-

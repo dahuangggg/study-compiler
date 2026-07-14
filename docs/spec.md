@@ -28,6 +28,7 @@ The first user is the project owner. The design must remain portable enough to b
 ## Public CLI contract
 
 ```text
+learning-wiki setup [--vault VAULT] [--agent auto|codex|claude|agents|all]... [--target PATH]... [--copy] [--force]
 learning-wiki init VAULT
 learning-wiki source add VAULT PATH --kind paper|document|chat [--title TITLE]
 learning-wiki source add-url VAULT URL [--title TITLE]
@@ -42,6 +43,10 @@ learning-wiki draft promote VAULT SLUG --approve
 learning-wiki digest build VAULT [--period daily|weekly|monthly]
 learning-wiki doctor VAULT [--json]
 ```
+
+`setup` installs the five bundled Agent Skills and optionally initializes the
+vault. Installation is idempotent and preserves conflicting existing Skills
+unless the user explicitly passes `--force`.
 
 All command failures use exit code `2` for invalid user input/state and print `error: <message>` to stderr. Successful mutating commands print a compact JSON object so Agents can consume them reliably.
 
@@ -73,6 +78,7 @@ The Agent may add prerequisites, counterexamples, equations, exercises, or misco
 
 - Unit tests cover URL/slug validation, lesson validation, hashing, and path containment.
 - Integration tests use temporary directories for init, import, stage, recall, promote, digest, and doctor.
+- The one-command installer is exercised in an isolated home and tool directory.
 - One end-to-end acceptance test exercises the complete paper-to-approved-note path.
 - No network or model calls occur in tests.
 
