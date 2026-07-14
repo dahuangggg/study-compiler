@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -149,6 +150,109 @@ class SetupCommandTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertIn("./install.sh --vault", completed.stdout)
             self.assertFalse((Path(temp_dir) / ".codex").exists())
+
+    @unittest.skipUnless(shutil.which("uv"), "uv is required for cache regression")
+    def test_reinstall_rebuilds_changed_local_source_at_the_same_version(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            checkout = root / "checkout"
+            shutil.copytree(
+                project_root,
+                checkout,
+                ignore=shutil.ignore_patterns(
+                    ".git", ".venv", "build", "dist", "*.egg-info", "__pycache__"
+                ),
+            )
+            package_init = checkout / "src/learning_wiki/__init__.py"
+            package_init.write_text(
+                package_init.read_text(encoding="utf-8")
+                + '\nINSTALL_TEST_MARKER = "first"\n',
+                encoding="utf-8",
+            )
+            environment = os.environ.copy()
+            environment.pop("PYTHONPATH", None)
+            environment.update(
+                {
+                    "HOME": str(root / "home"),
+                    "LEARNING_WIKI_BIN_DIR": str(root / "bin"),
+                    "LEARNING_WIKI_TOOL_DIR": str(root / "tools"),
+                    "UV_CACHE_DIR": str(root / "uv-cache"),
+                }
+            )
+            command = [
+                "bash",
+                str(checkout / "install.sh"),
+                "--agent",
+                "codex",
+                "--vault",
+                str(root / "Learn"),
+            ]
+
+            first = subprocess.run(
+                command,
+                cwd=checkout,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(first.returncode, 0, first.stderr)
+            installed_python = root / "tools/learning-wiki/bin/python"
+            installed_init = next(
+                (root / "tools/learning-wiki").glob(
+                    "lib/python*/site-packages/learning_wiki/__init__.py"
+                )
+            )
+            self.assertIn(
+                'INSTALL_TEST_MARKER = "first"',
+                installed_init.read_text(encoding="utf-8"),
+                first.stderr,
+            )
+            first_marker = subprocess.run(
+                [
+                    str(installed_python),
+                    "-c",
+                    "import learning_wiki; print(learning_wiki.INSTALL_TEST_MARKER)",
+                ],
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(first_marker.returncode, 0, first_marker.stderr)
+            self.assertEqual(first_marker.stdout.strip(), "first")
+            package_init.write_text(
+                package_init.read_text(encoding="utf-8").replace(
+                    'INSTALL_TEST_MARKER = "first"',
+                    'INSTALL_TEST_MARKER = "second"',
+                ),
+                encoding="utf-8",
+            )
+
+            second = subprocess.run(
+                command,
+                cwd=checkout,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(second.returncode, 0, second.stderr)
+            marker = subprocess.run(
+                [
+                    str(installed_python),
+                    "-c",
+                    "import learning_wiki; print(learning_wiki.INSTALL_TEST_MARKER)",
+                ],
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(marker.returncode, 0, marker.stderr)
+            self.assertEqual(marker.stdout.strip(), "second")
 
     def test_setup_prints_human_readable_summary_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

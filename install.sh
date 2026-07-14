@@ -40,14 +40,15 @@ if command -v uv >/dev/null 2>&1; then
   export UV_TOOL_BIN_DIR="$BIN_DIR"
   export UV_TOOL_DIR="$TOOL_DIR"
   printf '  正在安装命令行工具... '
-  uv tool install --quiet --force "$ROOT"
+  uv tool install --quiet --force --reinstall "$ROOT"
   printf '完成\n'
   CLI="$BIN_DIR/learning-wiki"
 else
   VENV="$TOOL_DIR/venv"
   printf '  正在创建独立 Python 环境... '
   python3 -m venv "$VENV"
-  "$VENV/bin/python" -m pip install --quiet --no-deps "$ROOT"
+  "$VENV/bin/python" -m pip install \
+    --quiet --no-deps --force-reinstall --no-cache-dir "$ROOT"
   printf '完成\n'
   CLI="$VENV/bin/learning-wiki"
   LINK="$BIN_DIR/learning-wiki"
