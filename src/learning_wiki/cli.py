@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Sequence
 
 from .errors import LearningWikiError
+from .sources import add_local_source, add_snippet, add_url_source, list_sources
 from .storage import initialize_vault
 
 
@@ -18,6 +19,32 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands = parser.add_subparsers(dest="command", required=True)
     init = subcommands.add_parser("init", help="initialize a learning vault")
     init.add_argument("vault", type=Path)
+
+    source = subcommands.add_parser("source", help="register immutable learning sources")
+    source_commands = source.add_subparsers(dest="source_command", required=True)
+
+    source_add = source_commands.add_parser("add", help="snapshot a local source file")
+    source_add.add_argument("vault", type=Path)
+    source_add.add_argument("path", type=Path)
+    source_add.add_argument("--kind", choices=("paper", "document", "chat"), required=True)
+    source_add.add_argument("--title")
+
+    source_url = source_commands.add_parser("add-url", help="register an HTTPS web reference")
+    source_url.add_argument("vault", type=Path)
+    source_url.add_argument("url")
+    source_url.add_argument("--title")
+
+    source_snippet = source_commands.add_parser("add-snippet", help="snapshot a chat excerpt")
+    source_snippet.add_argument("vault", type=Path)
+    source_snippet.add_argument("--kind", choices=("chat",), default="chat")
+    source_snippet.add_argument("--title", required=True)
+    snippet_input = source_snippet.add_mutually_exclusive_group(required=True)
+    snippet_input.add_argument("--text")
+    snippet_input.add_argument("--from-file", type=Path)
+
+    source_list = source_commands.add_parser("list", help="list registered sources")
+    source_list.add_argument("vault", type=Path)
+    source_list.add_argument("--json", action="store_true")
     return parser
 
 
@@ -27,6 +54,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.command == "init":
             result = initialize_vault(args.vault)
+        elif args.command == "source" and args.source_command == "add":
+            result = add_local_source(args.vault, args.path, kind=args.kind, title=args.title)
+        elif args.command == "source" and args.source_command == "add-url":
+            result = add_url_source(args.vault, args.url, title=args.title)
+        elif args.command == "source" and args.source_command == "add-snippet":
+            text = args.text
+            if args.from_file is not None:
+                text = args.from_file.read_text(encoding="utf-8")
+            result = add_snippet(args.vault, title=args.title, text=text, kind=args.kind)
+        elif args.command == "source" and args.source_command == "list":
+            sources = list_sources(args.vault)
+            if not args.json:
+                for source in sources:
+                    print(f"{source['id']}\t{source['kind']}\t{source['title']}")
+                return 0
+            result = {"sources": sources}
         else:  # pragma: no cover - argparse owns command validation
             parser.error("unknown command")
             return 2
@@ -39,4 +82,3 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def entrypoint() -> None:
     raise SystemExit(main())
-

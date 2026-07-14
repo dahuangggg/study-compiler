@@ -9,7 +9,7 @@
 
 ## Task 2: Source registry
 
-- [ ] Import files and snippets, register URLs, hash content, and deduplicate.
+- [x] Import files and snippets, register URLs, hash content, and deduplicate.
 - Acceptance: all three source families work; unsafe/oversized inputs fail closed.
 - Verify: source tests plus CLI smoke checks.
 - Dependencies: Task 1.
