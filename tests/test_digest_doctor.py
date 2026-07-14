@@ -10,7 +10,7 @@ from study_compiler.lessons import create_draft, promote_draft, record_recall
 from study_compiler.sources import add_local_source, add_snippet
 from study_compiler.storage import initialize_vault
 
-from tests.test_lessons import VALID_BODY
+from tests.test_lessons import valid_body
 
 
 class DigestAndDoctorTests(unittest.TestCase):
@@ -35,7 +35,7 @@ class DigestAndDoctorTests(unittest.TestCase):
             slug="attention",
             title="Attention",
             source_ids=[lesson_source["id"]],
-            body=VALID_BODY,
+            body=valid_body(lesson_source["id"]),
         )
         record_recall(
             self.vault,
@@ -60,6 +60,20 @@ class DigestAndDoctorTests(unittest.TestCase):
         )
         self.assertTrue(result["path"].startswith("_staging/digests/"))
 
+    def test_digest_never_overwrites_an_existing_agenda(self) -> None:
+        add_snippet(self.vault, title="Source", text="A concept.")
+        now = datetime(2026, 7, 14, 9, 0, tzinfo=UTC)
+        first = build_digest(self.vault, period="daily", now=now)
+        first_path = self.vault / first["path"]
+        original = first_path.read_bytes()
+
+        from study_compiler.errors import StateError
+
+        with self.assertRaisesRegex(StateError, "already exists"):
+            build_digest(self.vault, period="daily", now=now)
+
+        self.assertEqual(first_path.read_bytes(), original)
+
     def test_doctor_passes_for_complete_learning_flow(self) -> None:
         source = add_snippet(
             self.vault, title="Lesson", text="Attention uses context."
@@ -69,7 +83,7 @@ class DigestAndDoctorTests(unittest.TestCase):
             slug="attention",
             title="Attention",
             source_ids=[source["id"]],
-            body=VALID_BODY,
+            body=valid_body(source["id"]),
         )
         record_recall(
             self.vault, "attention", score=4, retelling="Tokens mix relevant context."
@@ -105,7 +119,7 @@ class DigestAndDoctorTests(unittest.TestCase):
             slug="attention",
             title="Attention",
             source_ids=[source["id"]],
-            body=VALID_BODY,
+            body=valid_body(source["id"]),
         )
         promote_draft(self.vault, "attention", approve=True)
         (self.vault / source["snapshot"]).unlink()
@@ -135,6 +149,36 @@ class DigestAndDoctorTests(unittest.TestCase):
             any("learning-state.json" in error for error in report["errors"])
         )
 
+    def test_doctor_reports_invalid_utf8_state_without_crashing(self) -> None:
+        (self.vault / ".study-compiler/learning-state.json").write_bytes(b"\xff\xfe")
+
+        report = inspect_vault(self.vault)
+
+        self.assertFalse(report["ok"])
+        self.assertIn("utf-8", "\n".join(report["errors"]).lower())
+
+    def test_doctor_reports_missing_managed_directories_without_crashing(self) -> None:
+        (self.vault / "sources").rmdir()
+
+        report = inspect_vault(self.vault)
+
+        self.assertFalse(report["ok"])
+        self.assertIn("sources", "\n".join(report["errors"]).lower())
+
+    def test_doctor_reports_a_symlinked_source_directory_without_crashing(
+        self,
+    ) -> None:
+        source = add_snippet(self.vault, title="Source", text="A concept.")["source"]
+        source_directory = self.vault / "sources" / source["id"]
+        outside = self.root / "outside-source"
+        source_directory.rename(outside)
+        source_directory.symlink_to(outside, target_is_directory=True)
+
+        report = inspect_vault(self.vault)
+
+        self.assertFalse(report["ok"])
+        self.assertIn("symlink", "\n".join(report["errors"]).lower())
+
     def test_doctor_detects_invalid_staged_lesson(self) -> None:
         source = add_snippet(
             self.vault, title="Lesson", text="Attention uses context."
@@ -144,7 +188,7 @@ class DigestAndDoctorTests(unittest.TestCase):
             slug="attention",
             title="Attention",
             source_ids=[source["id"]],
-            body=VALID_BODY,
+            body=valid_body(source["id"]),
         )
         staged = self.vault / "_staging/lessons/attention.md"
         staged.write_text(
@@ -166,7 +210,7 @@ class DigestAndDoctorTests(unittest.TestCase):
             slug="attention",
             title="Attention",
             source_ids=[source["id"]],
-            body=VALID_BODY,
+            body=valid_body(source["id"]),
         )
         promote_draft(self.vault, "attention", approve=True)
         manifest_path = self.vault / ".study-compiler/manifest.json"

@@ -1,4 +1,4 @@
 interface:
   display_name: "Lesson Draft"
-  short_description: "Turn registered sources into teachable lesson drafts"
-  default_prompt: "Use $lesson-draft to teach this source with examples and a recall prompt."
+  short_description: "Integrate sources into teachable staged lessons"
+  default_prompt: "Use $lesson-draft to compare this source with existing lessons, then integrate or synthesize it with examples and a recall prompt."

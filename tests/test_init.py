@@ -3,8 +3,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from study_compiler.errors import ValidationError
-from study_compiler.storage import initialize_vault, safe_child
+from study_compiler.digest import build_digest
+from study_compiler.errors import StateError, ValidationError
+from study_compiler.sources import add_snippet
+from study_compiler.storage import initialize_vault, require_vault, safe_child
 
 
 class InitializeVaultTests(unittest.TestCase):
@@ -37,9 +39,12 @@ class InitializeVaultTests(unittest.TestCase):
             for relative in (
                 ".study-compiler/manifest.json",
                 ".study-compiler/learning-state.json",
+                ".study-compiler/link-patches",
                 "sources",
                 "_staging/lessons",
                 "_staging/digests",
+                "_staging/link-patches",
+                "exports",
                 "lessons",
                 "reviews",
                 "index.md",
@@ -77,6 +82,61 @@ class InitializeVaultTests(unittest.TestCase):
 
             with self.assertRaises(ValidationError):
                 safe_child(vault, "..", "outside.md")
+
+    def test_initialization_rejects_a_symlinked_control_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            vault = root / "Learn"
+            vault.mkdir()
+            outside_log = root / "outside.log"
+            outside_log.write_text("outside\n", encoding="utf-8")
+            (vault / "log.md").symlink_to(outside_log)
+
+            with self.assertRaisesRegex(
+                (StateError, ValidationError), "symlink|workspace"
+            ):
+                initialize_vault(vault)
+
+            self.assertEqual(outside_log.read_text(encoding="utf-8"), "outside\n")
+
+    def test_require_vault_rejects_a_symlinked_state_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            vault = root / "Learn"
+            external_state = root / "external-state"
+            external_state.mkdir()
+            (external_state / "manifest.json").write_text(
+                '{"schema_version": 1, "sources": {}}', encoding="utf-8"
+            )
+            (external_state / "learning-state.json").write_text(
+                '{"schema_version": 1, "lessons": {}}', encoding="utf-8"
+            )
+            vault.mkdir()
+            (vault / ".study-compiler").symlink_to(
+                external_state, target_is_directory=True
+            )
+
+            with self.assertRaisesRegex(StateError, "symlink"):
+                require_vault(vault)
+
+    def test_digest_rejects_a_symlinked_staging_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            vault = root / "Learn"
+            outside = root / "outside"
+            outside.mkdir()
+            initialize_vault(vault)
+            add_snippet(vault, title="Source", text="Grounded source.")
+            digests = vault / "_staging/digests"
+            digests.rmdir()
+            digests.symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaisesRegex(
+                (StateError, ValidationError), "symlink|workspace"
+            ):
+                build_digest(vault)
+
+            self.assertEqual(list(outside.iterdir()), [])
 
 
 if __name__ == "__main__":

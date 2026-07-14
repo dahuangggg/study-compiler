@@ -10,6 +10,7 @@ from pathlib import Path
 
 from study_compiler.errors import StateError
 from study_compiler.installer import SKILL_NAMES, choose_agent_names, install_skills
+from tests.test_lessons import valid_body
 
 
 class SkillInstallerTests(unittest.TestCase):
@@ -284,17 +285,22 @@ class SetupCommandTests(unittest.TestCase):
                 "--target",
                 str(target),
                 "--copy",
+                home=root / "home",
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertIn("Study Compiler is ready", completed.stdout)
-            self.assertIn("5 skills ready", completed.stdout)
+            self.assertIn("7 skills ready", completed.stdout)
             self.assertIn(str(vault.resolve()), completed.stdout)
             self.assertNotIn('{"targets":', completed.stdout)
             self.assertTrue((vault / ".study-compiler/manifest.json").is_file())
             for name in SKILL_NAMES:
                 self.assertTrue((target / name / "SKILL.md").is_file())
                 self.assertFalse((target / name).is_symlink())
+            config = json.loads(
+                (root / "home/.study-compiler/config.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(config["workspace"], str(vault.resolve()))
 
     def test_setup_json_flag_keeps_machine_readable_contract(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -310,6 +316,7 @@ class SetupCommandTests(unittest.TestCase):
                 str(target),
                 "--copy",
                 "--json",
+                home=root / "home",
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
@@ -317,10 +324,140 @@ class SetupCommandTests(unittest.TestCase):
             self.assertEqual(payload["workspace"]["workspace"], str(vault.resolve()))
             self.assertEqual(payload["targets"][0]["installed"], list(SKILL_NAMES))
 
-    def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
+    def test_setup_configures_watched_source_roots_once(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            vault = root / "Learn"
+            notes = root / "Notes"
+            chats = root / "Chats"
+            notes.mkdir()
+            chats.mkdir()
+
+            completed = self.run_cli(
+                "setup",
+                "--workspace",
+                str(vault),
+                "--source-root",
+                str(notes),
+                "--source-root",
+                str(chats),
+                "--target",
+                str(root / "agent-skills"),
+                "--copy",
+                "--json",
+                home=root / "home",
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            payload = json.loads(completed.stdout)
+            self.assertEqual(
+                payload["workspace"]["source_watch"]["roots"],
+                sorted([str(notes.resolve()), str(chats.resolve())]),
+            )
+            watch = json.loads(
+                (vault / ".study-compiler/source-watch.json").read_text()
+            )
+            self.assertEqual(
+                watch["roots"], sorted([str(notes.resolve()), str(chats.resolve())])
+            )
+
+    def test_configured_cli_run_lifecycle_is_machine_readable(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            home = root / "home"
+            vault = root / "Learn"
+            target = root / "agent-skills"
+            setup = self.run_cli(
+                "setup",
+                "--workspace",
+                str(vault),
+                "--target",
+                str(target),
+                "--copy",
+                "--json",
+                home=home,
+            )
+            self.assertEqual(setup.returncode, 0, setup.stderr)
+            imported = self.run_cli(
+                "source",
+                "add-snippet",
+                str(vault),
+                "--title",
+                "Run source",
+                "--text",
+                "A source for the configured run.",
+                home=home,
+            )
+            self.assertEqual(imported.returncode, 0, imported.stderr)
+            source_id = json.loads(imported.stdout)["source"]["id"]
+
+            started_process = self.run_cli(
+                "run", "start", "--period", "daily", home=home
+            )
+            self.assertEqual(started_process.returncode, 0, started_process.stderr)
+            started = json.loads(started_process.stdout)
+            resumed = self.run_cli("run", "resume", started["run_id"], home=home)
+            self.assertEqual(resumed.returncode, 0, resumed.stderr)
+            self.assertEqual(json.loads(resumed.stdout)["status"], "resumed")
+
+            body_path = root / "lesson-body.md"
+            body_path.write_text(valid_body(source_id), encoding="utf-8")
+            drafted = self.run_cli(
+                "draft",
+                "create",
+                str(vault),
+                "--slug",
+                "configured-run",
+                "--title",
+                "Configured Run",
+                "--source",
+                source_id,
+                "--content-file",
+                str(body_path),
+                home=home,
+            )
+            self.assertEqual(drafted.returncode, 0, drafted.stderr)
+
+            action = started["next_action"]
+            artifact = vault / started["artifact_path"]
+            artifact.write_text(
+                "---\n"
+                f"run_id: {json.dumps(started['run_id'])}\n"
+                f"action_type: {json.dumps(action['type'])}\n"
+                f"action_id: {json.dumps(action['id'])}\n"
+                "---\n\n# Learning Session\n\nConfigured CLI result.\n",
+                encoding="utf-8",
+            )
+            finished = self.run_cli(
+                "run",
+                "finish",
+                started["run_id"],
+                "--artifact",
+                str(artifact),
+                home=home,
+            )
+            self.assertEqual(finished.returncode, 0, finished.stderr)
+            self.assertEqual(json.loads(finished.stdout)["status"], "completed")
+
+            status = self.run_cli("status", "--json", home=home)
+            self.assertEqual(status.returncode, 0, status.stderr)
+            status_payload = json.loads(status.stdout)
+            self.assertEqual(status_payload["workspace"], str(vault.resolve()))
+            self.assertIsNone(status_payload["active_run"])
+
+            doctor = self.run_cli("doctor", str(vault), "--json", home=home)
+            self.assertEqual(doctor.returncode, 0, doctor.stderr)
+            doctor_payload = json.loads(doctor.stdout)
+            self.assertTrue(doctor_payload["ok"], doctor_payload["errors"])
+
+    def run_cli(
+        self, *arguments: str, home: Path | None = None
+    ) -> subprocess.CompletedProcess[str]:
         project_root = Path(__file__).resolve().parents[1]
         environment = os.environ.copy()
         environment["PYTHONPATH"] = str(project_root / "src")
+        if home is not None:
+            environment["HOME"] = str(home)
         return subprocess.run(
             [sys.executable, "-m", "study_compiler", *arguments],
             cwd=project_root,

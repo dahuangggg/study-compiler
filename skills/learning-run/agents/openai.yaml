@@ -1,0 +1,4 @@
+interface:
+  display_name: "Learning Run"
+  short_description: "Compile source changes and maintain connected learning"
+  default_prompt: "Use $learning-run to process one source or review action and stage safe graph maintenance when useful."

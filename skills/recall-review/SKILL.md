@@ -11,6 +11,10 @@ Use retrieval practice to find understanding gaps, not to reward wording similar
 
 Ask the learner to explain the concept in their own words and give an example. Do not show the model answer immediately before asking. Accept uncertainty; it is diagnostic signal.
 
+When the prompt came from a review cluster, ask for one connected explanation,
+then evaluate each member lesson separately. A response may demonstrate one
+member but not another; never copy one aggregate score across the cluster.
+
 ## Evaluate against sources
 
 Read the relevant lesson and its registered sources. Score the retelling:
@@ -31,6 +35,11 @@ Save the learner's exact retelling to a temporary UTF-8 file and run:
 study-compiler recall record <workspace> <slug> --score <1-5> --retelling-file <file>
 ```
 
+For a cluster response, run this separately only for members that can be scored
+from the learner's answer. Leave unsupported members awaiting a response and ask
+one targeted follow-up. Use the same exact learner retelling as evidence for
+each scored member; do not invent member-specific answers.
+
 ## Revise a staged lesson
 
 If the lesson is still staged and the failure reveals a teaching problem, revise only the body. Preserve its sources and status. Keep all required headings, then run:
@@ -39,7 +48,9 @@ If the lesson is still staged and the failure reveals a teaching problem, revise
 study-compiler draft revise <workspace> <slug> --content-file <revised-body-file>
 ```
 
-Do not rewrite an approved lesson silently. Propose a new staged revision in a future version or ask the user how to proceed.
+Do not add new source scope while repairing a reviewed lesson. Do not rewrite an
+approved lesson silently; create a separate staged synthesis/comparison when new
+evidence needs to be connected.
 
 ## Finish
 

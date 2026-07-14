@@ -11,12 +11,13 @@ usage() {
 Install Study Compiler, its agent skills, and optionally a study workspace.
 
 Usage:
-  ./install.sh --workspace ~/Documents/MyLearning
+  ./install.sh --workspace ~/Documents/MyLearning --source-root ~/Documents/Notes
   ./install.sh --agent all --workspace ~/Documents/MyLearning
   ./install.sh --target ~/.my-agent/skills --copy
 
 Setup options passed through to study-compiler:
   --workspace PATH   Initialize a study workspace at PATH.
+  --source-root PATH Watch an external learning-source directory (repeatable).
   --agent NAME       Install for auto, codex, claude, agents, or all.
   --target PATH      Install into a custom skill directory (repeatable).
   --copy             Copy Skills instead of creating symlinks.

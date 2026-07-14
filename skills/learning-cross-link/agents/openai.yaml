@@ -1,0 +1,4 @@
+interface:
+  display_name: "Learning Cross-Link"
+  short_description: "Discover and stage typed links between approved lessons"
+  default_prompt: "Use $learning-cross-link to find missing connections in my approved lessons and stage reviewable typed-link patches."

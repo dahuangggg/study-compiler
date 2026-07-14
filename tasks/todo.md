@@ -30,7 +30,7 @@
 
 ## Task 5: Agent Skills
 
-- [x] Add five Skills that follow the CLI contract and trust boundary.
+- [x] Add the original five Skills that follow the CLI contract and trust boundary.
 - Acceptance: source-to-lesson, recall revision, promotion, and periodic guidance are fully instructed.
 - Verify: structural Skill checks and manual contract review.
 - Dependencies: Tasks 1–4.
@@ -41,3 +41,17 @@
 - Acceptance: all criteria have current evidence; no remote/fork relationship exists.
 - Verify: full test suite, runtime fixture, doctor, Git inspection.
 - Dependencies: all prior tasks.
+
+## Task 7: Watched-first recorded learning runs
+
+- [x] Configure external source roots, detect content deltas, and record one bounded resumable Agent action.
+- Acceptance: normal scheduled work needs no per-file import; source changes form a staged connected review cluster and never approve content.
+- Verify: watch, planner, run-lifecycle, integration, and installer tests.
+- Dependencies: Tasks 1–6.
+
+## Task 8: Durable typed lesson graph
+
+- [x] Add lesson format v3 relationships, graph check/export, structured staged link patches, and `$learning-cross-link`.
+- Acceptance: approved notes gain only additive, validated relationships after one exact patch approval; scheduled runs can stage but not apply them.
+- Verify: relationship unit/CLI/recovery tests, Skill validation, doctor, graph export, package inspection, and clean-install fixture.
+- Dependencies: Tasks 1–7.

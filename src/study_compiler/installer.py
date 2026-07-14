@@ -10,7 +10,9 @@ from .errors import StateError
 
 SKILL_NAMES = (
     "learning-digest",
+    "learning-cross-link",
     "learning-ingest",
+    "learning-run",
     "learning-stage-commit",
     "lesson-draft",
     "recall-review",
@@ -186,9 +188,18 @@ def format_setup_summary(result: dict[str, object]) -> str:
         lines.append(
             f"  Workspace  {_display_path(str(workspace['workspace']))} ({state})"
         )
+        source_watch = workspace.get("source_watch")
+        roots = source_watch.get("roots") if isinstance(source_watch, dict) else None
+        if isinstance(roots, list) and roots:
+            lines.append(f"  Sources    {len(roots)} watched root(s)")
+            lines.extend(f"  - {_display_path(str(root))}" for root in roots)
+        else:
+            lines.append("  Sources    no watched roots configured")
     else:
         lines.append("  Workspace  not created (run study-compiler init later)")
-    lines.extend(["  Skills     5 skills ready", "", "  Installed for"])
+    lines.extend(
+        [f"  Skills     {len(SKILL_NAMES)} skills ready", "", "  Installed for"]
+    )
     targets = result.get("targets", [])
     if isinstance(targets, list):
         for report in targets:
@@ -200,7 +211,7 @@ def format_setup_summary(result: dict[str, object]) -> str:
         [
             "",
             "Next: restart the selected agent, then ask:",
-            "  Use $learning-ingest to import this paper or webpage.",
+            "  Use $learning-run to check source changes and prepare a joint review.",
         ]
     )
     return "\n".join(lines)
