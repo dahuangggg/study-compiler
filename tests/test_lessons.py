@@ -162,6 +162,25 @@ class LessonLifecycleTests(unittest.TestCase):
         manifest = json.loads((self.vault / ".learning-wiki/manifest.json").read_text())
         self.assertEqual(manifest["sources"][self.source["id"]]["status"], "integrated")
 
+    def test_failed_promotion_keeps_draft_when_provenance_is_corrupt(self) -> None:
+        create_draft(
+            self.vault,
+            slug="attention-intuition",
+            title="Understanding Attention",
+            source_ids=[self.source["id"]],
+            body=VALID_BODY,
+        )
+        manifest_path = self.vault / ".learning-wiki/manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        manifest["sources"] = {}
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        with self.assertRaisesRegex(StateError, "unknown source"):
+            promote_draft(self.vault, "attention-intuition", approve=True)
+
+        self.assertTrue((self.vault / "_staging/lessons/attention-intuition.md").exists())
+        self.assertFalse((self.vault / "lessons/attention-intuition.md").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

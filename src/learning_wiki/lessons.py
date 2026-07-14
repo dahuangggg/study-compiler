@@ -258,21 +258,22 @@ def promote_draft(vault: Path, slug: str, *, approve: bool) -> dict[str, Any]:
     if destination.exists():
         raise StateError(f"approved lesson already exists: {slug}")
     metadata, body = parse_lesson(staged.read_text(encoding="utf-8"))
+    state = _learning_state(root)
+    manifest = _manifest(root)
+    for source_id in metadata["source_ids"]:
+        if source_id not in manifest["sources"]:
+            raise StateError(f"lesson cites unknown source ID: {source_id}")
     timestamp = utc_now()
     metadata["status"] = "approved"
     metadata["updated"] = timestamp
     destination.write_text(_render_lesson(metadata, body), encoding="utf-8")
     staged.unlink()
 
-    state = _learning_state(root)
     lesson_state = state["lessons"].setdefault(slug, {})
     lesson_state.update({"status": "approved", "approved_at": timestamp})
     write_json(root / ".learning-wiki/learning-state.json", state)
-    manifest = _manifest(root)
     for source_id in metadata["source_ids"]:
-        source = manifest["sources"].get(source_id)
-        if source is None:
-            raise StateError(f"lesson cites unknown source ID: {source_id}")
+        source = manifest["sources"][source_id]
         source["status"] = "integrated"
     write_json(root / ".learning-wiki/manifest.json", manifest)
     _rebuild_index(root)
