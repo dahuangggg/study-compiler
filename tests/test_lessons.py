@@ -126,10 +126,10 @@ class LessonLifecycleTests(unittest.TestCase):
         self.assertEqual(len(review_lines), 1)
         self.assertEqual(json.loads(review_lines[0])["score"], 4)
         state = json.loads(
-            (self.vault / ".learning-wiki/learning-state.json").read_text()
+            (self.vault / ".study-compiler/learning-state.json").read_text()
         )
         self.assertEqual(state["lessons"]["attention-intuition"]["mastery_score"], 4)
-        manifest = json.loads((self.vault / ".learning-wiki/manifest.json").read_text())
+        manifest = json.loads((self.vault / ".study-compiler/manifest.json").read_text())
         self.assertNotIn("mastery_score", manifest["sources"][self.source["id"]])
 
     def test_revises_body_while_preserving_staged_provenance(self) -> None:
@@ -176,7 +176,7 @@ class LessonLifecycleTests(unittest.TestCase):
             "[[lessons/attention-intuition|Understanding Attention]]",
             (self.vault / "index.md").read_text(),
         )
-        manifest = json.loads((self.vault / ".learning-wiki/manifest.json").read_text())
+        manifest = json.loads((self.vault / ".study-compiler/manifest.json").read_text())
         self.assertEqual(manifest["sources"][self.source["id"]]["status"], "integrated")
 
     def test_failed_promotion_keeps_draft_when_provenance_is_corrupt(self) -> None:
@@ -187,7 +187,7 @@ class LessonLifecycleTests(unittest.TestCase):
             source_ids=[self.source["id"]],
             body=VALID_BODY,
         )
-        manifest_path = self.vault / ".learning-wiki/manifest.json"
+        manifest_path = self.vault / ".study-compiler/manifest.json"
         manifest = json.loads(manifest_path.read_text())
         manifest["sources"] = {}
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")

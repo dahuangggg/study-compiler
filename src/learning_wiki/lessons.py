@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .errors import StateError, ValidationError
-from .storage import read_json, require_vault, safe_child, utc_now, write_json
+from .storage import read_json, require_vault, safe_child, state_file, utc_now, write_json
 
 SLUG_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 REQUIRED_HEADINGS = (
@@ -82,14 +82,14 @@ def parse_lesson(content: str) -> tuple[dict[str, Any], str]:
 
 
 def _manifest(vault: Path) -> dict[str, Any]:
-    manifest = read_json(vault / ".learning-wiki/manifest.json")
+    manifest = read_json(state_file(vault, "manifest.json"))
     if not isinstance(manifest.get("sources"), dict):
         raise StateError("manifest.json has an unsupported schema")
     return manifest
 
 
 def _learning_state(vault: Path) -> dict[str, Any]:
-    state = read_json(vault / ".learning-wiki/learning-state.json")
+    state = read_json(state_file(vault, "learning-state.json"))
     if not isinstance(state.get("lessons"), dict):
         raise StateError("learning-state.json has an unsupported schema")
     return state
@@ -145,12 +145,12 @@ def create_draft(
         "last_reviewed": None,
         "next_review": None,
     }
-    write_json(root / ".learning-wiki/learning-state.json", state)
+    write_json(state_file(root, "learning-state.json"), state)
     for source_id in unique_source_ids:
         source = manifest["sources"][source_id]
         source["status"] = "staged"
         source["lesson_slugs"] = sorted(set(source.get("lesson_slugs", [])) | {slug})
-    write_json(root / ".learning-wiki/manifest.json", manifest)
+    write_json(state_file(root, "manifest.json"), manifest)
     with (root / "log.md").open("a", encoding="utf-8") as log:
         log.write(f"- {timestamp} DRAFT_CREATE slug={slug}\n")
     return {
@@ -243,7 +243,7 @@ def record_recall(
             "next_review": record["next_review"],
         }
     )
-    write_json(root / ".learning-wiki/learning-state.json", state)
+    write_json(state_file(root, "learning-state.json"), state)
     with (root / "log.md").open("a", encoding="utf-8") as log:
         log.write(f"- {record['reviewed_at']} RECALL slug={slug} score={score}\n")
     return record | {"can_explain": score >= 4}
@@ -291,11 +291,11 @@ def promote_draft(vault: Path, slug: str, *, approve: bool) -> dict[str, Any]:
 
     lesson_state = state["lessons"].setdefault(slug, {})
     lesson_state.update({"status": "approved", "approved_at": timestamp})
-    write_json(root / ".learning-wiki/learning-state.json", state)
+    write_json(state_file(root, "learning-state.json"), state)
     for source_id in metadata["source_ids"]:
         source = manifest["sources"][source_id]
         source["status"] = "integrated"
-    write_json(root / ".learning-wiki/manifest.json", manifest)
+    write_json(state_file(root, "manifest.json"), manifest)
     _rebuild_index(root)
     with (root / "log.md").open("a", encoding="utf-8") as log:
         log.write(f"- {timestamp} DRAFT_PROMOTE slug={slug}\n")

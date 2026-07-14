@@ -7,7 +7,7 @@ from typing import Any
 
 from .errors import StateError, ValidationError
 from .lessons import list_drafts
-from .storage import read_json, require_vault
+from .storage import read_json, require_vault, state_file
 
 PERIODS = {"daily", "weekly", "monthly"}
 
@@ -21,7 +21,7 @@ def _timestamp(value: datetime) -> str:
 
 
 def _load_state(vault: Path, name: str, key: str) -> dict[str, Any]:
-    state = read_json(vault / ".learning-wiki" / name)
+    state = read_json(state_file(vault, name))
     if not isinstance(state.get(key), dict):
         raise StateError(f"{name} has an unsupported schema")
     return state

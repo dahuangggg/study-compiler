@@ -7,7 +7,7 @@ from typing import Any
 
 from .errors import LearningWikiError, ValidationError
 from .lessons import parse_lesson, render_index
-from .storage import read_json, require_vault, safe_child
+from .storage import read_json, require_vault, safe_child, state_file
 
 
 def _hash_file(path: Path) -> str:
@@ -93,8 +93,8 @@ def inspect_vault(vault: Path) -> dict[str, Any]:
     root = require_vault(vault)
     errors: list[str] = []
     warnings: list[str] = []
-    manifest = _read_state(root / ".learning-wiki/manifest.json", errors)
-    learning_state = _read_state(root / ".learning-wiki/learning-state.json", errors)
+    manifest = _read_state(state_file(root, "manifest.json"), errors)
+    learning_state = _read_state(state_file(root, "learning-state.json"), errors)
 
     sources: dict[str, Any] = {}
     if manifest is not None:

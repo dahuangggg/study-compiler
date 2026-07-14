@@ -124,7 +124,7 @@ class DigestAndDoctorTests(unittest.TestCase):
         self.assertTrue(any("unknown source ID" in error for error in report["errors"]))
 
     def test_doctor_reports_malformed_state_without_crashing(self) -> None:
-        (self.vault / ".learning-wiki/learning-state.json").write_text(
+        (self.vault / ".study-compiler/learning-state.json").write_text(
             "{broken", encoding="utf-8"
         )
 
@@ -169,7 +169,7 @@ class DigestAndDoctorTests(unittest.TestCase):
             body=VALID_BODY,
         )
         promote_draft(self.vault, "attention", approve=True)
-        manifest_path = self.vault / ".learning-wiki/manifest.json"
+        manifest_path = self.vault / ".study-compiler/manifest.json"
         manifest = json.loads(manifest_path.read_text())
         manifest["sources"][source["id"]]["snapshot"] = "../../outside.md"
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")

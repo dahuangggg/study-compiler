@@ -10,8 +10,10 @@ from typing import Any
 from .errors import StateError, ValidationError
 
 SCHEMA_VERSION = 1
+STATE_DIRECTORY = ".study-compiler"
+LEGACY_STATE_DIRECTORY = ".learning-wiki"
 DIRECTORIES = (
-    ".learning-wiki",
+    STATE_DIRECTORY,
     "sources",
     "_staging/lessons",
     "_staging/digests",
@@ -64,10 +66,24 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
         raise
 
 
+def state_directory(root: Path) -> Path:
+    current = root / STATE_DIRECTORY
+    if current.is_dir():
+        return current
+    legacy = root / LEGACY_STATE_DIRECTORY
+    if legacy.is_dir():
+        return legacy
+    return current
+
+
+def state_file(root: Path, name: str) -> Path:
+    return state_directory(root) / name
+
+
 def require_vault(vault: Path) -> Path:
     root = vault.expanduser().resolve()
-    if not root.is_dir() or not (root / ".learning-wiki").is_dir():
-        raise StateError(f"not a learning-wiki vault: {root}")
+    if not root.is_dir() or not state_directory(root).is_dir():
+        raise StateError(f"not a Study Compiler workspace: {root}")
     return root
 
 
@@ -76,16 +92,25 @@ def initialize_vault(vault: Path) -> dict[str, Any]:
     if root.exists() and not root.is_dir():
         raise ValidationError(f"vault path is not a directory: {root}")
 
-    created = not (root / ".learning-wiki").exists()
     root.mkdir(parents=True, exist_ok=True)
+    current_state = root / STATE_DIRECTORY
+    legacy_state = root / LEGACY_STATE_DIRECTORY
+    if current_state.exists() and legacy_state.exists():
+        raise StateError(
+            f"workspace contains both {STATE_DIRECTORY} and {LEGACY_STATE_DIRECTORY}"
+        )
+    migrated = legacy_state.is_dir() and not current_state.exists()
+    if migrated:
+        legacy_state.rename(current_state)
+    created = not current_state.exists()
     for relative in DIRECTORIES:
         safe_child(root, relative).mkdir(parents=True, exist_ok=True)
 
-    manifest = root / ".learning-wiki/manifest.json"
+    manifest = state_file(root, "manifest.json")
     if not manifest.exists():
         write_json(manifest, {"schema_version": SCHEMA_VERSION, "sources": {}})
 
-    state = root / ".learning-wiki/learning-state.json"
+    state = state_file(root, "learning-state.json")
     if not state.exists():
         write_json(state, {"schema_version": SCHEMA_VERSION, "lessons": {}})
 
@@ -97,6 +122,6 @@ def initialize_vault(vault: Path) -> dict[str, Any]:
 
     log = root / "log.md"
     if not log.exists():
-        log.write_text(f"# Learning Wiki Log\n\n- {utc_now()} INIT\n", encoding="utf-8")
+        log.write_text(f"# Study Compiler Log\n\n- {utc_now()} INIT\n", encoding="utf-8")
 
-    return {"created": created, "vault": str(root)}
+    return {"created": created, "migrated": migrated, "vault": str(root)}
