@@ -24,6 +24,7 @@ from .sources import (
     list_sources,
 )
 from .storage import initialize_vault
+from .installer import install_skills, locate_bundled_skills, resolve_skill_targets
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,6 +33,28 @@ def build_parser() -> argparse.ArgumentParser:
         description="Compile sources into reviewed, human-readable learning notes.",
     )
     subcommands = parser.add_subparsers(dest="command", required=True)
+    setup = subcommands.add_parser(
+        "setup", help="install Agent Skills and optionally initialize a vault"
+    )
+    setup.add_argument("--vault", type=Path)
+    setup.add_argument(
+        "--agent",
+        action="append",
+        choices=("auto", "codex", "claude", "agents", "all"),
+        default=[],
+        help="Agent target to install for; repeatable (default: auto)",
+    )
+    setup.add_argument(
+        "--target",
+        action="append",
+        type=Path,
+        default=[],
+        help="custom Agent skill directory; repeatable",
+    )
+    setup.add_argument("--copy", action="store_true", help="copy instead of symlink")
+    setup.add_argument(
+        "--force", action="store_true", help="replace conflicting bundled Skills"
+    )
     init = subcommands.add_parser("init", help="initialize a learning vault")
     init.add_argument("vault", type=Path)
 
@@ -139,7 +162,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        if args.command == "init":
+        if args.command == "setup":
+            targets = resolve_skill_targets(args.agent, args.target)
+            result = {
+                "targets": install_skills(
+                    locate_bundled_skills(),
+                    targets,
+                    copy=args.copy,
+                    force=args.force,
+                ),
+                "vault": initialize_vault(args.vault) if args.vault else None,
+            }
+        elif args.command == "init":
             result = initialize_vault(args.vault)
         elif args.command == "source" and args.source_command == "add":
             result = add_local_source(

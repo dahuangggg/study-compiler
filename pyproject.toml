@@ -17,3 +17,15 @@ learning-wiki = "learning_wiki.cli:entrypoint"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.data-files]
+"share/learning-wiki/skills/learning-digest" = ["skills/learning-digest/SKILL.md"]
+"share/learning-wiki/skills/learning-digest/agents" = ["skills/learning-digest/agents/openai.yaml"]
+"share/learning-wiki/skills/learning-ingest" = ["skills/learning-ingest/SKILL.md"]
+"share/learning-wiki/skills/learning-ingest/agents" = ["skills/learning-ingest/agents/openai.yaml"]
+"share/learning-wiki/skills/learning-stage-commit" = ["skills/learning-stage-commit/SKILL.md"]
+"share/learning-wiki/skills/learning-stage-commit/agents" = ["skills/learning-stage-commit/agents/openai.yaml"]
+"share/learning-wiki/skills/lesson-draft" = ["skills/lesson-draft/SKILL.md"]
+"share/learning-wiki/skills/lesson-draft/agents" = ["skills/lesson-draft/agents/openai.yaml"]
+"share/learning-wiki/skills/recall-review" = ["skills/recall-review/SKILL.md"]
+"share/learning-wiki/skills/recall-review/agents" = ["skills/recall-review/agents/openai.yaml"]
